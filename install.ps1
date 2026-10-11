@@ -93,6 +93,10 @@ if ($interactive) {
 }
 
 # --- Run ------------------------------------------------------------------
+# Modules may ask their own questions only in interactive runs
+$env:OMNIBOX_INTERACTIVE = '0'
+if ($interactive) { $env:OMNIBOX_INTERACTIVE = '1' }
+
 foreach ($m in $sel) {
     Write-Host "`n##### $($m.Name) #####" -ForegroundColor Magenta
     $a = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $m.Path)
