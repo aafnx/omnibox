@@ -6,15 +6,16 @@
 
 PowerShell от администратора (или SSH под админом).
 
-Все модули:
-
 ```powershell
 irm https://raw.githubusercontent.com/aafnx/omnibox/main/install.ps1 | iex
 ```
 
-Отдельные модули и режим проверки (`-Check` ничего не меняет, только показывает состояние):
+Скрипт покажет список модулей и спросит, какие запустить, в каком режиме (применить или только проверить), попросит подтверждение, а после применения предложит перезагрузку.
+
+Без вопросов, для автоматизации (`-All` — все модули, `-Module` — выбранные, `-Check` — только диагностика):
 
 ```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/aafnx/omnibox/main/install.ps1))) -All
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/aafnx/omnibox/main/install.ps1))) -Module wake-fix -Check
 ```
 
@@ -29,6 +30,7 @@ irm https://raw.githubusercontent.com/aafnx/omnibox/main/install.ps1 | iex
 ## Как добавить модуль
 
 - Файл `modules/NN-name.ps1`; модули выполняются по порядку `NN`.
+- В шапке строка `# Description: ...` — её показывает меню установщика.
 - Только ASCII внутри `.ps1`: Windows PowerShell 5.1 читает файлы без BOM в ANSI, и кириллица ломается.
 - Совместимость с PowerShell 5.1 (`else` на одной строке с `}`).
 - Поддерживать `param([switch]$Check)`: при `-Check` только диагностика.

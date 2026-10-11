@@ -1,5 +1,5 @@
 # OMNIBOX module: wake-fix
-# Wake only via WOL magic packet + Steam Controller receiver.
+# Description: Wake only via WOL magic packet + Steam Controller (kills wake timers, task wakes, NIC pattern wake)
 #   -Check   diagnostics only, no changes
 param([switch]$Check)
 
