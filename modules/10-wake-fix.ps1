@@ -60,7 +60,8 @@ Get-ScheduledTask | Where-Object { $_.Settings.WakeToRun } | ForEach-Object {
 # 5. NIC: magic packet only, no pattern/link wake, ARP/NS offload on
 Get-NetAdapter -Physical | Where-Object { $_.MediaType -eq '802.3' } | ForEach-Object {
     $n = $_.Name
-    Set-NetAdapterPowerManagement -Name $n -WakeOnMagicPacket Enabled -WakeOnPattern Disabled -ArpOffload Enabled -NSOffload Enabled -ErrorAction SilentlyContinue
+    # -NoRestart: restarting the NIC would drop an SSH session; changes apply on reboot
+    Set-NetAdapterPowerManagement -Name $n -WakeOnMagicPacket Enabled -WakeOnPattern Disabled -ArpOffload Enabled -NSOffload Enabled -NoRestart -ErrorAction SilentlyContinue
     Get-NetAdapterAdvancedProperty -Name $n -ErrorAction SilentlyContinue | ForEach-Object {
         $kw = $_.RegistryKeyword
         if ($kw -match '^\*?WakeOnPattern$' -or $kw -match '^\*?WakeOnLink$') {
@@ -69,7 +70,7 @@ Get-NetAdapter -Physical | Where-Object { $_.MediaType -eq '802.3' } | ForEach-O
             Set-NetAdapterAdvancedProperty -Name $n -RegistryKeyword $kw -RegistryValue 1 -NoRestart -ErrorAction SilentlyContinue
         }
     }
-    Write-Host "[ok] NIC '$n': magic packet only"
+    Write-Host "[ok] NIC '$n': magic packet only (takes effect after reboot)"
     Get-NetAdapterPowerManagement -Name $n | Format-List WakeOnMagicPacket, WakeOnPattern, ArpOffload, NSOffload
 }
 
