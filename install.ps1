@@ -1,14 +1,15 @@
 # OMNIBOX installer
 #
-# Interactive (asks which modules and mode):
 #   irm https://raw.githubusercontent.com/aafnx/omnibox/main/install.ps1 | iex
 #
-# Non-interactive:
+# Picks the frontend automatically: a window on the local desktop, a console menu over SSH.
+# With parameters:
+#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/aafnx/omnibox/main/install.ps1))) -Cli
 #   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/aafnx/omnibox/main/install.ps1))) -All
 #   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/aafnx/omnibox/main/install.ps1))) -Module wake-fix -Check
-#
-# Modules live in modules\NN-name.ps1, run in NN order, and declare "# Description: ..." in the header.
 param(
+    [switch]$Gui,
+    [switch]$Cli,
     [string[]]$Module,
     [switch]$All,
     [switch]$Check,
@@ -17,12 +18,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-[Console]::OutputEncoding = [Text.Encoding]::UTF8
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) { Write-Host 'OMNIBOX: run from an elevated PowerShell or SSH as an admin user.' -ForegroundColor Red; return }
-
-$interactive = -not ($Module -or $All -or $Check)
 
 # --- Download -------------------------------------------------------------
 $repo = 'aafnx/omnibox'
@@ -36,79 +34,29 @@ if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
 Expand-Archive -Path $zip -DestinationPath $tmp -Force
 $src = Get-ChildItem $tmp -Directory | Select-Object -First 1
 if (-not (Test-Path $root)) { New-Item $root -ItemType Directory | Out-Null }
+# Replace code folders entirely so renamed or removed files do not linger
+foreach ($d in 'lib', 'modules') { Remove-Item (Join-Path $root $d) -Recurse -Force -ErrorAction SilentlyContinue }
 Copy-Item (Join-Path $src.FullName '*') $root -Recurse -Force
 Remove-Item $zip, $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
-# --- Module list ----------------------------------------------------------
-$mods = @(Get-ChildItem (Join-Path $root 'modules') -Filter '*.ps1' | Sort-Object Name | ForEach-Object {
-    $desc = ''
-    foreach ($l in (Get-Content $_.FullName -TotalCount 15)) {
-        if ($l -match '^#\s*Description:\s*(.+)$') { $desc = $Matches[1].Trim(); break }
-    }
-    [pscustomobject]@{ Name = ($_.BaseName -replace '^\d+-', ''); Desc = $desc; Path = $_.FullName }
-})
-if ($mods.Count -eq 0) { Write-Host 'OMNIBOX: no modules found.' -ForegroundColor Red; return }
+# --- Frontend -------------------------------------------------------------
+$ps = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+$inSsh = [bool]($env:SSH_CONNECTION -or $env:SSH_CLIENT)
+$noDesktop = $inSsh -or ((Get-Process -Id $PID).SessionId -eq 0)
+$nonInteractive = [bool]($Module -or $All -or $Check)
 
-# --- Selection ------------------------------------------------------------
-if ($interactive) {
-    Write-Host "`n=== OMNIBOX setup ===" -ForegroundColor Cyan
-    for ($i = 0; $i -lt $mods.Count; $i++) {
-        Write-Host ("  [{0}] {1}" -f ($i + 1), $mods[$i].Name) -ForegroundColor White -NoNewline
-        if ($mods[$i].Desc) { Write-Host (" - " + $mods[$i].Desc) -ForegroundColor DarkGray } else { Write-Host '' }
-    }
-    Write-Host ''
+$useGui = -not $nonInteractive -and -not $Cli -and -not $noDesktop
+if ($Gui -and $noDesktop) { Write-Host 'OMNIBOX: no desktop in this session (SSH), using the console menu.' -ForegroundColor Yellow }
 
-    $sel = $null
-    while (-not $sel) {
-        $ans = (Read-Host 'Modules to run (e.g. 1,3 | a = all | q = quit)').Trim().ToLower()
-        if ($ans -eq 'q') { Write-Host 'Cancelled.'; return }
-        if ($ans -eq 'a') {
-            $sel = $mods
-        } else {
-            $idx = @($ans -split '[,\s]+' | Where-Object { $_ -match '^\d+$' } | ForEach-Object { [int]$_ } | Sort-Object -Unique)
-            $bad = @($idx | Where-Object { $_ -lt 1 -or $_ -gt $mods.Count })
-            if ($idx.Count -gt 0 -and $bad.Count -eq 0) {
-                $sel = @($idx | ForEach-Object { $mods[$_ - 1] })
-            } else {
-                Write-Host 'Invalid input.' -ForegroundColor Yellow
-            }
-        }
-    }
-
-    $mode = ''
-    while ($mode -ne 'a' -and $mode -ne 'c') {
-        $mode = (Read-Host 'Mode: [a]pply changes or [c]heck only (a/c)').Trim().ToLower()
-    }
-    $checkMode = ($mode -eq 'c')
-
-    $label = 'APPLY'
-    if ($checkMode) { $label = 'CHECK' }
-    Write-Host ("`nWill run in {0} mode: {1}" -f $label, (($sel | ForEach-Object { $_.Name }) -join ', ')) -ForegroundColor Cyan
-    if ((Read-Host 'Continue? (y/n)').Trim().ToLower() -ne 'y') { Write-Host 'Cancelled.'; return }
-} else {
-    $sel = $mods
-    if ($Module) { $sel = @($mods | Where-Object { $Module -contains $_.Name }) }
-    if ($sel.Count -eq 0) { Write-Host "OMNIBOX: no matching modules ($($Module -join ', '))" -ForegroundColor Red; return }
-    $checkMode = [bool]$Check
+if ($useGui) {
+    $gui = Join-Path $root 'lib\gui.ps1'
+    Start-Process -FilePath $ps -ArgumentList "-NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$gui`" -Root `"$root`""
+    Write-Host 'OMNIBOX: setup window opened.' -ForegroundColor Green
+    return
 }
 
-# --- Run ------------------------------------------------------------------
-# Modules may ask their own questions only in interactive runs
-$env:OMNIBOX_INTERACTIVE = '0'
-if ($interactive) { $env:OMNIBOX_INTERACTIVE = '1' }
-
-foreach ($m in $sel) {
-    Write-Host "`n##### $($m.Name) #####" -ForegroundColor Magenta
-    $a = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $m.Path)
-    if ($checkMode) { $a += '-Check' }
-    & powershell.exe @a
-}
-
-Write-Host "`nOMNIBOX: done. Local copy: $root" -ForegroundColor Green
-
-if ($interactive -and -not $checkMode) {
-    if ((Read-Host 'Reboot now to apply all changes? (y/n)').Trim().ToLower() -eq 'y') {
-        Write-Host 'Rebooting in 5 seconds...' -ForegroundColor Yellow
-        shutdown.exe /r /t 5
-    }
-}
+$cliArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $root 'lib\cli.ps1'), '-Root', $root)
+if ($Module) { $cliArgs += '-Module'; $cliArgs += ($Module -join ',') }
+if ($All)    { $cliArgs += '-All' }
+if ($Check)  { $cliArgs += '-Check' }
+& $ps @cliArgs

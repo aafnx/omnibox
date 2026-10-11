@@ -1,15 +1,20 @@
 # OMNIBOX module: ssh-server
-# Description: OpenSSH Server: install, autostart, firewall, PowerShell as default shell, key login
-#   -Check   diagnostics only, no changes
-# Questions are asked only when the installer runs interactively (OMNIBOX_INTERACTIVE=1).
-param([switch]$Check)
+# OpenSSH Server: install, autostart, firewall, PowerShell as default shell, key login.
+#   -Check                      diagnostics only, no changes
+#   -PublicKey "ssh-ed25519 ..."  add a key for admin accounts (stored on this PC only)
+#   -Scope keep|lan|any         who may connect (firewall remote address)
+#   -PasswordLogin keep|disable|enable
+param(
+    [switch]$Check,
+    [string]$PublicKey = '',
+    [ValidateSet('keep', 'lan', 'any')][string]$Scope = 'keep',
+    [ValidateSet('keep', 'disable', 'enable')][string]$PasswordLogin = 'keep'
+)
 
-[Console]::OutputEncoding = [Text.Encoding]::UTF8
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) { Write-Host "Run as administrator" -ForegroundColor Red; return }
 
-$interactive = ($env:OMNIBOX_INTERACTIVE -eq '1')
-$inSsh    = [bool]$env:SSH_CONNECTION
+$inSsh    = [bool]($env:SSH_CONNECTION -or $env:SSH_CLIENT)
 $sshDir   = Join-Path $env:ProgramData 'ssh'
 $cfg      = Join-Path $sshDir 'sshd_config'
 $keys     = Join-Path $sshDir 'administrators_authorized_keys'
@@ -17,11 +22,6 @@ $psExe    = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershel
 $regKey   = 'HKLM:\SOFTWARE\OpenSSH'
 $ruleName = 'OpenSSH-Server-In-TCP'
 $keyRegex = '^(ssh-(ed25519|rsa|dss)|ecdsa-sha2-\S+|sk-\S+)\s+\S+'
-
-function Ask-YesNo([string]$q) {
-    if (-not $interactive) { return $false }
-    return ((Read-Host "$q (y/n)").Trim().ToLower() -eq 'y')
-}
 
 function Get-KeyCount {
     if (-not (Test-Path $keys)) { return 0 }
@@ -118,14 +118,12 @@ if (Get-NetFirewallRule -Name $ruleName -ErrorAction SilentlyContinue) {
     New-NetFirewallRule -Name $ruleName -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 | Out-Null
 }
 Write-Host "[ok] Firewall rule enabled (TCP 22)"
-if ($interactive) {
-    if (Ask-YesNo 'Allow SSH only from the local network (blocks VPN and other subnets)?') {
-        Get-NetFirewallRule -Name $ruleName | Set-NetFirewallAddressFilter -RemoteAddress LocalSubnet
-        Write-Host "[ok] SSH limited to local subnet"
-    } else {
-        Get-NetFirewallRule -Name $ruleName | Set-NetFirewallAddressFilter -RemoteAddress Any
-        Write-Host "[ok] SSH allowed from any address"
-    }
+if ($Scope -eq 'lan') {
+    Get-NetFirewallRule -Name $ruleName | Set-NetFirewallAddressFilter -RemoteAddress LocalSubnet
+    Write-Host "[ok] SSH limited to local subnet"
+} elseif ($Scope -eq 'any') {
+    Get-NetFirewallRule -Name $ruleName | Set-NetFirewallAddressFilter -RemoteAddress Any
+    Write-Host "[ok] SSH allowed from any address"
 }
 
 # 4. PowerShell as default shell (applies to new connections, no restart needed)
@@ -134,20 +132,18 @@ Set-ItemProperty $regKey -Name DefaultShell -Value $psExe -Type String
 Write-Host "[ok] Default shell: Windows PowerShell"
 
 # 5. Public key for admin accounts (stored on this PC only, never in the repo)
-if ($interactive) {
-    $k = (Read-Host 'Paste a public key for admin login (ssh-ed25519 ..., empty = skip)').Trim()
-    if ($k) {
-        if ($k -notmatch $keyRegex) {
-            Write-Host "[skip] Does not look like a public key" -ForegroundColor Yellow
+$k = $PublicKey.Trim()
+if ($k) {
+    if ($k -notmatch $keyRegex) {
+        Write-Host "[skip] Does not look like a public key" -ForegroundColor Yellow
+    } else {
+        $existing = @()
+        if (Test-Path $keys) { $existing = @(Get-Content $keys) }
+        if ($existing -contains $k) {
+            Write-Host "[ok] Key already present"
         } else {
-            $existing = @()
-            if (Test-Path $keys) { $existing = @(Get-Content $keys) }
-            if ($existing -contains $k) {
-                Write-Host "[ok] Key already present"
-            } else {
-                Add-Content -Path $keys -Value $k -Encoding ascii
-                Write-Host "[ok] Key added"
-            }
+            Add-Content -Path $keys -Value $k -Encoding ascii
+            Write-Host "[ok] Key added"
         }
     }
 }
@@ -159,21 +155,25 @@ if (Test-Path $keys) {
 
 # 6. Password login
 $cfgChanged = $false
-if ($interactive -and (Test-Path $cfg)) {
-    $pwNow = Get-SshdOption 'PasswordAuthentication'
-    if ($pwNow -eq 'no') {
-        if (Ask-YesNo 'Password login is disabled. Re-enable it?') {
-            Set-SshdOption 'PasswordAuthentication' 'yes'
-            $cfgChanged = $true
-            Write-Host "[ok] Password login enabled"
-        }
-    } elseif ((Get-KeyCount) -gt 0) {
-        Write-Host "Make sure key login works before disabling passwords, or you can lock yourself out of SSH." -ForegroundColor Yellow
-        if (Ask-YesNo 'Disable password login (keys only)?') {
-            Set-SshdOption 'PasswordAuthentication' 'no'
-            $cfgChanged = $true
-            Write-Host "[ok] Password login disabled"
-        }
+if ($PasswordLogin -ne 'keep' -and -not (Test-Path $cfg)) {
+    Write-Host "[skip] sshd_config not found, password setting unchanged" -ForegroundColor Yellow
+} elseif ($PasswordLogin -eq 'disable') {
+    if ((Get-KeyCount) -eq 0) {
+        Write-Host "[skip] No admin keys: password login stays on, otherwise SSH would be locked" -ForegroundColor Yellow
+    } elseif ((Get-SshdOption 'PasswordAuthentication') -ne 'no') {
+        Set-SshdOption 'PasswordAuthentication' 'no'
+        $cfgChanged = $true
+        Write-Host "[ok] Password login disabled"
+    } else {
+        Write-Host "[ok] Password login already disabled"
+    }
+} elseif ($PasswordLogin -eq 'enable') {
+    if ((Get-SshdOption 'PasswordAuthentication') -eq 'no') {
+        Set-SshdOption 'PasswordAuthentication' 'yes'
+        $cfgChanged = $true
+        Write-Host "[ok] Password login enabled"
+    } else {
+        Write-Host "[ok] Password login already enabled"
     }
 }
 if ($cfgChanged) {

@@ -1,9 +1,8 @@
 # OMNIBOX module: wake-fix
-# Description: Wake only via WOL magic packet + Steam Controller (kills wake timers, task wakes, NIC pattern wake)
+# Wake only via WOL magic packet + Steam Controller (kills wake timers, task wakes, NIC pattern wake)
 #   -Check   diagnostics only, no changes
 param([switch]$Check)
 
-[Console]::OutputEncoding = [Text.Encoding]::UTF8
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) { Write-Host "Run as administrator" -ForegroundColor Red; return }
 

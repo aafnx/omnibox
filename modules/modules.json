@@ -1,0 +1,69 @@
+{
+  "modules": [
+    {
+      "id": "ssh-server",
+      "title": "SSH-сервер",
+      "description": "OpenSSH Server: установка, автозапуск, правило брандмауэра, PowerShell как оболочка по умолчанию, вход по ключу.",
+      "reboot": false,
+      "options": [
+        {
+          "id": "PublicKey",
+          "type": "text",
+          "label": "Публичный ключ для входа администратора",
+          "hint": "ssh-ed25519 AAAA… Оставьте пустым, чтобы не добавлять. Ключ хранится только на OMNIBOX.",
+          "default": ""
+        },
+        {
+          "id": "Scope",
+          "type": "choice",
+          "label": "Откуда разрешить подключение",
+          "default": "keep",
+          "choices": [
+            { "id": "keep", "label": "Не менять" },
+            { "id": "lan", "label": "Только из локальной сети" },
+            { "id": "any", "label": "С любого адреса" }
+          ]
+        },
+        {
+          "id": "PasswordLogin",
+          "type": "choice",
+          "label": "Вход по паролю",
+          "hint": "Отключайте только после того, как проверили вход по ключу.",
+          "default": "keep",
+          "choices": [
+            { "id": "keep", "label": "Не менять" },
+            { "id": "disable", "label": "Отключить, только ключи" },
+            { "id": "enable", "label": "Включить" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wake-fix",
+      "title": "Пробуждение",
+      "description": "Будить OMNIBOX только по Wake-on-LAN и с приёмника Steam Controller: отключить таймеры пробуждения, пробуждение для обслуживания и обновлений, сетевая карта — только magic packet.",
+      "reboot": true,
+      "options": []
+    },
+    {
+      "id": "apps",
+      "title": "Приложения",
+      "description": "Установить или обновить до последней версии через winget.",
+      "reboot": false,
+      "options": [
+        {
+          "id": "Apps",
+          "type": "multi",
+          "label": "Что установить",
+          "default": [ "Brave.Brave", "Valve.Steam", "EpicGames.EpicGamesLauncher", "GOG.Galaxy" ],
+          "choices": [
+            { "id": "Brave.Brave", "label": "Brave" },
+            { "id": "Valve.Steam", "label": "Steam" },
+            { "id": "EpicGames.EpicGamesLauncher", "label": "Epic Games Launcher" },
+            { "id": "GOG.Galaxy", "label": "GOG Galaxy" }
+          ]
+        }
+      ]
+    }
+  ]
+}
