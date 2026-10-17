@@ -38,6 +38,9 @@
     server: '<rect x="4" y="4.5" width="16" height="6" rx="1.5"/><rect x="4" y="13.5" width="16" height="6" rx="1.5"/><circle cx="8" cy="7.5" r="0.6"/><circle cx="8" cy="16.5" r="0.6"/>',
     monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
     search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
+    moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+    restart: '<path d="M4 12a8 8 0 1 0 2.35-5.65"/><path d="M4 4.5V8h3.5"/>',
+    lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
     router: '<rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 16.5h.01M11 16.5h.01M15 9.5a4 4 0 0 1 4 3.5M15 6a7.5 7.5 0 0 1 7.5 7"/>'
   };
   function iconSvg(name) {
@@ -85,6 +88,7 @@
   /* Ответы для предпросмотра в обычном браузере. */
   function demoDelay(uri) {
     if (/discover$/.test(uri)) return 2600;
+    if (/agentPair$/.test(uri)) return 700;
     if (/resolveMac$/.test(uri)) return 900;
     return 300;
   }
@@ -100,13 +104,17 @@
         { ip: '192.168.1.10', mac: '00:11:22:33:44:55', name: 'OMNIBOX', source: 'netbios' }
       ] };
     }
+    if (/agentInfo$/.test(uri)) return { returnValue: true, app: 'win-cli', version: '1.4.0', name: 'OMNIBOX', paired: !!cfg.agentToken };
+    if (/agentPair$/.test(uri)) return String(p.code).replace(/\D/g, '').length === 6 ? { returnValue: true, token: 'demo-token', name: 'OMNIBOX' } : { returnValue: false, errorText: 'Код — шесть цифр' };
+    if (/agentPower$/.test(uri)) return { returnValue: true, ok: true, action: p.action };
     if (/applicationManager\/launch$/.test(uri)) return { returnValue: true };
     return { returnValue: true };
   }
 
   /* ── Настройки ──────────────────────────────────────── */
 
-  var DEFAULTS = { name: 'OMNIBOX', ip: '', mac: '', hdmi: 3, autoRun: true, closeAfter: true };
+  var AGENT_PORT = 7798;
+  var DEFAULTS = { name: 'OMNIBOX', ip: '', mac: '', hdmi: 3, autoRun: true, closeAfter: true, agentPort: AGENT_PORT, agentToken: '' };
   var cfg = load();
 
   function load() {
@@ -156,9 +164,10 @@
     setFocus(target);
   }
   function back() {
+    if (modalOpen) { closeModal(); return; }
     if (current === 'launch') { cancelSwitch(); show('home', { replace: true }); return; }
     var prev = history.pop();
-    if (prev && prev !== 'launch') show(prev, { replace: true });
+    if (prev && prev !== 'launch') show(prev, { replace: true, keepForm: true });
     else closeApp();
   }
 
@@ -174,7 +183,8 @@
 
   function focusables() {
     if (!current) return [];
-    return qsa('[data-focus]', $('screen-' + current)).filter(function (el) { return el.offsetParent !== null; });
+    var root = modalOpen ? $('modal') : $('screen-' + current);
+    return qsa('[data-focus]', root).filter(function (el) { return el.offsetParent !== null; });
   }
 
   function move(dir) {
@@ -205,7 +215,8 @@
     if (action && actions[action]) { actions[action](el); return; }
     if (el.hasAttribute('data-hdmi')) { form.hdmi = +el.getAttribute('data-hdmi'); renderForm(); return; }
     if (el.hasAttribute('data-toggle')) { var k = el.getAttribute('data-toggle'); form[k] = !form[k]; renderForm(); return; }
-    if (el.hasAttribute('data-device')) { pickDevice(+el.getAttribute('data-device')); }
+    if (el.hasAttribute('data-device')) { pickDevice(+el.getAttribute('data-device')); return; }
+    if (el.hasAttribute('data-power')) { powerAction(el.getAttribute('data-power')); }
   }
 
   document.addEventListener('keydown', function (e) {
@@ -242,11 +253,13 @@
   // Указка Magic Remote и мышь.
   document.addEventListener('mouseover', function (e) {
     var el = e.target.closest ? e.target.closest('[data-focus]') : null;
+    if (el && modalOpen && !$('modal').contains(el)) return;
     if (el && el !== focused) setFocus(el);
   });
   document.addEventListener('click', function (e) {
     if (current === 'launch' && switchTimer) { cancelSwitch(); show('home', { replace: true }); return; }
     var el = e.target.closest ? e.target.closest('[data-focus]') : null;
+    if (el && modalOpen && !$('modal').contains(el)) return;
     if (el) { setFocus(el); activate(el); }
   });
 
@@ -346,6 +359,7 @@
       '<span class="sep">·</span>' + (mac ? esc(mac) : '<span class="missing">MAC не указан</span>');
     $('home-lead').textContent = 'Пробуждение по сети и переключение на HDMI ' + cfg.hdmi + ' одной кнопкой.';
 
+    refreshAgentState();
     var st = $('device-status');
     if (!isIp(cfg.ip)) { badge(st, 'neutral', 'Неизвестно'); return; }
     badge(st, 'neutral', 'Проверяем');
@@ -378,6 +392,8 @@
     });
     $('sw-autoRun').classList.toggle('is-on', !!form.autoRun);
     $('sw-closeAfter').classList.toggle('is-on', !!form.closeAfter);
+    badge($('agent-badge'), cfg.agentToken ? 'ok' : 'neutral', cfg.agentToken ? 'Подключено' : 'Не подключено');
+    $('pair-btn').textContent = cfg.agentToken ? 'Подключить заново' : 'Подключить';
   }
 
   function fieldError(fld, hint, text) {
@@ -490,6 +506,26 @@
       show('home', { replace: true });
       toast('ok', 'Настройки сохранены');
     },
+    pair: function () {
+      var ip = current === 'settings' ? $('f-ip').value.trim() : cfg.ip;
+      if (!isIp(ip)) {
+        if (current !== 'settings') show('settings', { focus: $('f-ip') });
+        else fieldError('fld-ip', 'h-ip', 'Сначала укажите IP-адрес OMNIBOX');
+        toast('warn', 'Для подключения WinCLI нужен IP-адрес OMNIBOX');
+        return;
+      }
+      pairIp = ip;
+      show('pair');
+    },
+    doPair: doPair,
+    unpair: function () {
+      cfg.agentToken = '';
+      save();
+      renderPair();
+      toast('info', 'Подключение забыто. Для нового нужен код: win pair', 'Отключено');
+    },
+    confirm: function () { var f = modalOk; closeModal(); if (f) f(); },
+    dismiss: function () { closeModal(); },
     resolve: function (btn) {
       var ip = $('f-ip').value.trim();
       clearErrors();
@@ -510,8 +546,157 @@
   var screens = {
     home: { enter: refreshHome },
     settings: { enter: function (opts) { if (!opts.keepForm) openForm(); } },
-    discover: { enter: scan }
+    discover: { enter: scan },
+    pair: { enter: enterPair }
   };
+
+  /* ── Питание через агент WinCLI ─────────────────────── */
+
+  var POWER = {
+    sleep: { done: 'засыпает', toast: 'Сон' },
+    reboot: { done: 'перезагружается', toast: 'Перезагрузка', confirm: 'Перезагрузить', text: 'Несохранённые данные в открытых программах могут пропасть.' },
+    shutdown: { done: 'выключается', toast: 'Выключение', confirm: 'Выключить', text: 'Включить снова можно кнопкой «Включить» — по сети.' },
+    lock: { done: 'заблокирован', toast: 'Блокировка' }
+  };
+
+  function agentParams(extra) {
+    var p = { ip: cfg.ip, port: cfg.agentPort || AGENT_PORT, token: cfg.agentToken };
+    Object.keys(extra || {}).forEach(function (k) { p[k] = extra[k]; });
+    return p;
+  }
+
+  var agentSeq = 0;
+  function refreshAgentState() {
+    var el = $('agent-state');
+    if (!cfg.agentToken) { badge(el, 'neutral', 'Не подключено'); return; }
+    if (!isIp(cfg.ip)) { badge(el, 'neutral', 'Нет IP-адреса'); return; }
+    badge(el, 'neutral', 'Проверяем');
+    var seq = ++agentSeq;
+    luna(SVC + 'agentInfo', agentParams(), function (res) {
+      if (seq !== agentSeq) return;
+      if (res.returnValue) badge(el, 'ok', 'На связи · win ' + (res.version || ''));
+      else badge(el, 'neutral', 'Недоступен');
+    });
+  }
+
+  function powerAction(action) {
+    var meta = POWER[action];
+    if (!meta) return;
+    if (!cfg.agentToken) {
+      toast('warn', 'Подключите агент WinCLI, чтобы управлять питанием');
+      actions.pair();
+      return;
+    }
+    if (meta.confirm) {
+      openModal(meta.confirm + ' ' + cfg.name + '?', meta.text, meta.confirm, function () { sendPower(action); });
+      return;
+    }
+    sendPower(action);
+  }
+
+  function sendPower(action) {
+    var meta = POWER[action];
+    luna(SVC + 'agentPower', agentParams({ action: action }), function (res) {
+      if (res.returnValue) {
+        toast('ok', cfg.name + ' ' + meta.done, meta.toast);
+        if (action !== 'lock') badge($('device-status'), 'neutral', action === 'reboot' ? 'Перезагрузка' : 'Отключается');
+        return;
+      }
+      if (res.status === 401) {
+        cfg.agentToken = '';
+        save();
+        refreshAgentState();
+        toast('danger', 'Агент не узнал телевизор. Подключите заново: win pair');
+        return;
+      }
+      toast('danger', res.errorText || 'Команда не выполнена');
+    });
+  }
+
+  /* ── Экран подключения ──────────────────────────────── */
+
+  var pairIp = '';
+
+  function renderPair() {
+    $('unpair-btn').hidden = !cfg.agentToken;
+  }
+
+  function pairPort() {
+    var v = $('f-port').value.trim();
+    var n = +v;
+    return v === '' ? AGENT_PORT : (/^\d+$/.test(v) && n > 0 && n < 65536 ? n : 0);
+  }
+
+  function enterPair() {
+    pairIp = pairIp || cfg.ip;
+    $('f-code').value = '';
+    $('f-port').value = String(cfg.agentPort || AGENT_PORT);
+    $('fld-code').classList.remove('field--error');
+    $('h-code').textContent = 'Действует 10 минут, один раз';
+    renderPair();
+    checkAgent();
+    setFocus($('f-code'));
+  }
+
+  function checkAgent() {
+    var st = $('pair-status');
+    var port = pairPort() || AGENT_PORT;
+    $('pair-addr').textContent = pairIp + ':' + port;
+    badge(st, 'neutral', 'Ищем агент');
+    luna(SVC + 'agentInfo', { ip: pairIp, port: port }, function (res) {
+      if (current !== 'pair') return;
+      if (res.returnValue) badge(st, 'ok', 'Найден · ' + (res.name || 'ПК') + ' · win ' + (res.version || ''));
+      else badge(st, 'warn', res.errorText || 'Агент не отвечает');
+    });
+  }
+
+  function doPair() {
+    var code = $('f-code').value.replace(/\D/g, '');
+    var port = pairPort();
+    $('fld-code').classList.remove('field--error');
+    if (code.length !== 6) { codeError('Введите шесть цифр с экрана OMNIBOX'); return; }
+    if (!port) { codeError('Порт — число от 1 до 65535'); return; }
+    luna(SVC + 'agentPair', { ip: pairIp, port: port, code: code, name: 'Телевизор LG' }, function (res) {
+      if (!res.returnValue) { codeError(res.errorText || 'Не удалось подключиться'); return; }
+      cfg.agentToken = res.token;
+      cfg.agentPort = port;
+      cfg.ip = pairIp;
+      save();
+      if (form && history[history.length - 1] === 'settings') form.ip = pairIp;
+      toast('ok', 'Питание ' + (res.name || cfg.name) + ' — с пульта', 'Подключено');
+      back();
+      if (current === 'settings') { $('f-ip').value = pairIp; renderForm(); }
+    });
+  }
+
+  function codeError(text) {
+    $('fld-code').classList.add('field--error');
+    $('h-code').textContent = text;
+  }
+
+  /* ── Окно подтверждения ─────────────────────────────── */
+
+  var modalOpen = false;
+  var modalOk = null;
+  var modalReturn = null;
+
+  function openModal(title, text, okLabel, onOk) {
+    $('modal-title').textContent = title;
+    $('modal-text').textContent = text || '';
+    $('modal-ok').textContent = okLabel;
+    modalOk = onOk;
+    modalReturn = focused;
+    modalOpen = true;
+    $('modal').hidden = false;
+    setFocus(qsa('[data-action="dismiss"]', $('modal'))[0]); // по умолчанию — «Отмена»
+  }
+
+  function closeModal() {
+    modalOpen = false;
+    modalOk = null;
+    $('modal').hidden = true;
+    setFocus(modalReturn);
+  }
 
   /* ── Масштаб: макет 1200×675 растягивается на экран ── */
 

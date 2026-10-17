@@ -34,7 +34,7 @@ $o = [scriptblock]::Create((irm https://raw.githubusercontent.com/aafnx/omnibox/
 
 ## Телевизор
 
-[`tv/webos`](tv/webos) — приложение OmniBox для LG webOS: одна кнопка будит OMNIBOX по Wake-on-LAN и переключает телевизор на его вход HDMI. Умеет искать устройства в сети и находить MAC по IP. Установка через Developer Mode, подробности в [его README](tv/webos/README.md).
+[`tv/webos`](tv/webos) — приложение OmniBox для LG webOS: одна кнопка будит OMNIBOX по Wake-on-LAN и переключает телевизор на его вход HDMI. Умеет искать устройства в сети и находить MAC по IP. Через агент [WinCLI](https://github.com/aafnx/win-cli) (`win --agent`) усыпляет, перезагружает и выключает OMNIBOX. Установка через Developer Mode, подробности в [его README](tv/webos/README.md).
 
 ## Устройство
 

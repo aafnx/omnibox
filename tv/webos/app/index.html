@@ -53,6 +53,17 @@
             <button class="ob-btn ob-btn--secondary ob-btn--l" data-focus data-action="discover"><span data-icon="search"></span>Найти устройства</button>
             <button class="ob-btn ob-btn--ghost ob-btn--l" data-focus data-action="settings"><span data-icon="settings"></span>Настройки</button>
           </div>
+
+          <div class="power-head">
+            <span class="cat">Питание · WinCLI</span>
+            <span class="ob-badge ob-badge--neutral" id="agent-state"><span class="ob-badge__dot"></span>Не подключено</span>
+          </div>
+          <div class="actions actions--power">
+            <button class="ob-btn ob-btn--secondary" data-focus data-power="sleep"><span data-icon="moon"></span>Сон</button>
+            <button class="ob-btn ob-btn--danger" data-focus data-power="reboot"><span data-icon="restart"></span>Перезагрузить</button>
+            <button class="ob-btn ob-btn--danger" data-focus data-power="shutdown"><span data-icon="power"></span>Выключить</button>
+            <button class="ob-btn ob-btn--ghost" data-focus data-power="lock"><span data-icon="lock"></span>Заблокировать</button>
+          </div>
         </div>
         <div class="home__aside">
           <div class="halo"></div>
@@ -112,6 +123,14 @@
               <span class="switch-row__hint">Приложение не остаётся в памяти телевизора</span></span>
             <span class="switch" id="sw-closeAfter"></span>
           </div>
+          <div class="field agent-field">
+            <span class="field__label">Питание · WinCLI</span>
+            <div class="field__row">
+              <span class="ob-badge ob-badge--neutral" id="agent-badge"><span class="ob-badge__dot"></span>Не подключено</span>
+              <button class="ob-btn ob-btn--secondary" data-focus data-action="pair" id="pair-btn">Подключить</button>
+            </div>
+            <span class="field__hint">Сон, перезагрузка и выключение через агент <code>win --agent</code></span>
+          </div>
         </div>
       </div>
 
@@ -151,6 +170,61 @@
       </div>
     </div>
   </section>
+
+  <!-- ── Подключение агента WinCLI ── -->
+  <section class="screen" id="screen-pair">
+    <header class="topbar">
+      <span class="logo"><span data-mark="28"></span><span data-word="11.3"></span></span>
+    </header>
+    <div class="page">
+      <p class="label">04 · WinCLI</p>
+      <h1 class="display-m">Подключение питания</h1>
+      <p class="lead">Чтобы усыплять, перезагружать и выключать OMNIBOX с пульта, подключите агент WinCLI.</p>
+
+      <div class="form">
+        <div class="form__col">
+          <ol class="steps">
+            <li>На OMNIBOX выполните <code>win --agent</code>. Если агент уже установлен — <code>win pair</code>.</li>
+            <li>Введите шесть цифр кода с экрана OMNIBOX.</li>
+          </ol>
+          <div class="agent-found">
+            <span class="ob-badge ob-badge--neutral" id="pair-status"><span class="ob-badge__dot"></span>Ищем агент</span>
+            <span class="agent-found__addr mono" id="pair-addr"></span>
+          </div>
+        </div>
+        <div class="form__col">
+          <div class="field field--mono field--code" id="fld-code">
+            <label class="field__label" for="f-code">Код подключения</label>
+            <input class="field__input" id="f-code" data-focus type="text" inputmode="numeric" maxlength="7" placeholder="000 000" autocomplete="off" spellcheck="false">
+            <span class="field__hint" id="h-code">Действует 10 минут, один раз</span>
+          </div>
+          <div class="field field--mono" id="fld-port">
+            <label class="field__label" for="f-port">Порт агента</label>
+            <input class="field__input" id="f-port" data-focus type="text" inputmode="numeric" maxlength="5" placeholder="7798" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="ob-btn ob-btn--primary ob-btn--l" data-focus data-action="doPair">Подключить</button>
+        <button class="ob-btn ob-btn--ghost ob-btn--l" data-focus data-action="unpair" id="unpair-btn">Забыть подключение</button>
+        <button class="ob-btn ob-btn--ghost ob-btn--l" data-focus data-action="back">Назад</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Подтверждение ── -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal__card">
+      <p class="label">Подтверждение</p>
+      <h2 class="display-m" id="modal-title"></h2>
+      <p class="lead" id="modal-text"></p>
+      <div class="actions">
+        <button class="ob-btn ob-btn--danger ob-btn--l" data-focus data-action="confirm" id="modal-ok"></button>
+        <button class="ob-btn ob-btn--ghost ob-btn--l" data-focus data-action="dismiss">Отмена</button>
+      </div>
+    </div>
+  </div>
 
   <div class="toast" id="toast" role="status"><span class="ob-badge" id="toast-badge"><span class="ob-badge__dot"></span><span id="toast-word"></span></span><span id="toast-text"></span></div>
   <span class="ob-badge ob-badge--info demo-flag" id="demo-flag" hidden><span class="ob-badge__dot"></span>Предпросмотр без телевизора</span>

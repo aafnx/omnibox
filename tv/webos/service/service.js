@@ -9,6 +9,9 @@
  *   resolveMac { ip }        — MAC и имя устройства по IP (устройство должно быть в сети)
  *   probe      { ip }        — отвечает ли устройство (TCP 22/135/139/445/3389/5357/47989)
  *   info       {}            — сетевые интерфейсы телевизора
+ *   agentInfo  { ip, port? }                 — агент WinCLI: имя ПК и версия
+ *   agentPair  { ip, port?, code, name? }    — код из `win pair` → токен
+ *   agentPower { ip, port?, token, action }  — sleep | hibernate | reboot | shutdown | lock | cancel
  *
  * Код намеренно в стиле ES5: на webOS 4.x стоит старый Node.js.
  */
@@ -384,6 +387,79 @@ service.register('resolveMac', safe(function (msg, p) {
       msg.respond({ returnValue: true, ip: ip, mac: hit.mac, name: nbNames[ip] || null });
     });
   });
+}));
+
+/* ── Агент WinCLI: питание по сети ──────────────────── */
+
+var http = require('http');
+var AGENT_PORT = 7798;
+
+/* HTTP-запрос к агенту WinCLI (`win --agent`) в локальной сети. */
+function agentRequest(p, method, path, body, cb) {
+  if (!isIp(p.ip)) { cb({ returnValue: false, errorCode: 3, errorText: 'Неверный IP-адрес' }); return; }
+  var port = +p.port || AGENT_PORT;
+  var data = body ? JSON.stringify(body) : null;
+  var headers = { 'Accept': 'application/json' };
+  if (data) {
+    headers['Content-Type'] = 'application/json';
+    headers['Content-Length'] = Buffer.byteLength(data);
+  }
+  if (p.token) headers['Authorization'] = 'Bearer ' + p.token;
+
+  var finished = false;
+  function done(res) { if (!finished) { finished = true; cb(res); } }
+
+  var req = http.request({ host: p.ip.trim(), port: port, method: method, path: path, headers: headers }, function (res) {
+    var chunks = '';
+    res.setEncoding('utf8');
+    res.on('data', function (c) { if (chunks.length < 65536) chunks += c; });
+    res.on('end', function () {
+      var json = {};
+      try { json = JSON.parse(chunks || '{}'); } catch (e) { json = {}; }
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        json.returnValue = true;
+        json.status = res.statusCode;
+        done(json);
+      } else {
+        done({ returnValue: false, status: res.statusCode, errorCode: res.statusCode, errorText: json.error || ('HTTP ' + res.statusCode) });
+      }
+    });
+  });
+  req.setTimeout(4000, function () { req.abort(); });
+  req.on('error', function (e) {
+    var code = e && e.code;
+    var text = 'OMNIBOX не отвечает';
+    if (code === 'ECONNREFUSED') text = 'Агент WinCLI не запущен на ' + p.ip + ':' + port;
+    done({ returnValue: false, errorCode: 'NET', netError: code || 'TIMEOUT', errorText: text });
+  });
+  if (data) req.write(data);
+  req.end();
+}
+
+service.register('agentInfo', safe(function (msg, p) {
+  agentRequest(p, 'GET', '/v1/info', null, function (res) { msg.respond(res); });
+}));
+
+service.register('agentPair', safe(function (msg, p) {
+  var code = String(p.code || '').replace(/\D/g, '');
+  if (code.length !== 6) {
+    msg.respond({ returnValue: false, errorCode: 5, errorText: 'Код — шесть цифр' });
+    return;
+  }
+  agentRequest(p, 'POST', '/v1/pair', { code: code, name: p.name || 'Телевизор LG' }, function (res) { msg.respond(res); });
+}));
+
+service.register('agentPower', safe(function (msg, p) {
+  var allowed = { sleep: 1, hibernate: 1, reboot: 1, shutdown: 1, lock: 1, cancel: 1 };
+  if (!allowed[p.action]) {
+    msg.respond({ returnValue: false, errorCode: 6, errorText: 'Неизвестное действие' });
+    return;
+  }
+  if (!p.token) {
+    msg.respond({ returnValue: false, errorCode: 401, status: 401, errorText: 'Подключите WinCLI в настройках' });
+    return;
+  }
+  agentRequest(p, 'POST', '/v1/power', { action: p.action }, function (res) { msg.respond(res); });
 }));
 
 service.register('probe', safe(function (msg, p) {
