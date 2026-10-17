@@ -32,6 +32,10 @@ $o = [scriptblock]::Create((irm https://raw.githubusercontent.com/aafnx/omnibox/
 | `wake-fix` | Будит OMNIBOX только по Wake-on-LAN и с приёмника Steam Controller: отключает таймеры пробуждения, пробуждение для обслуживания, Windows Update и задач планировщика; сетевая карта — только magic packet. Нужна перезагрузка. |
 | `apps` | Ставит или обновляет до последней версии через winget (источник `winget`, без Microsoft Store): Brave, Steam, Epic Games Launcher, GOG Galaxy. |
 
+## Телевизор
+
+[`tv/webos`](tv/webos) — приложение OmniBox для LG webOS: одна кнопка будит OMNIBOX по Wake-on-LAN и переключает телевизор на его вход HDMI. Умеет искать устройства в сети и находить MAC по IP. Установка через Developer Mode, подробности в [его README](tv/webos/README.md).
+
 ## Устройство
 
 ```
@@ -42,6 +46,7 @@ lib/runner.ps1       запуск раздела с параметрами
 lib/common.ps1       общие функции
 modules/modules.json названия, описания и параметры разделов
 modules/<id>.ps1     сами разделы
+tv/webos/            приложение OmniBox для LG webOS
 ```
 
 Окно и меню строятся по `modules.json`, сами разделы ничего не спрашивают и получают все значения параметрами.

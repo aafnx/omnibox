@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="night">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OmniBox · OMNIBOX</title>
+  <link rel="stylesheet" href="css/omnibox.css">
+</head>
+<body class="ob-root">
+<div id="app">
+
+  <!-- ── Запуск: пробуждение и переключение входа ── -->
+  <section class="screen screen--launch" id="screen-launch" aria-live="polite">
+    <div class="halo"></div>
+    <div class="launch">
+      <span data-mark="176" data-lit="1" data-breathe="1"></span>
+      <div class="launch__word" data-word="34"></div>
+      <p class="launch__status" id="launch-status">Пробуждение</p>
+      <p class="launch__sub" id="launch-sub">&nbsp;</p>
+      <div class="launch__bar" id="launch-bar"><span></span></div>
+    </div>
+    <p class="launch__hint" id="launch-hint">Нажмите любую кнопку, чтобы остаться в приложении</p>
+  </section>
+
+  <!-- ── Главный экран ── -->
+  <section class="screen" id="screen-home">
+    <header class="topbar">
+      <span class="logo"><span data-mark="28"></span><span data-word="11.3"></span></span>
+      <div class="topbar__end"><span class="ob-badge ob-badge--neutral" id="hdmi-badge"><span class="ob-badge__dot"></span>HDMI 3</span></div>
+    </header>
+    <div class="page">
+      <div class="home">
+        <div class="home__main">
+          <p class="label">01 · Пуск</p>
+          <h1 class="display-l" id="home-title">OMNIBOX</h1>
+          <p class="lead" id="home-lead">Пробуждение по сети и переключение входа одной кнопкой.</p>
+
+          <article class="ob-card device" id="device-card">
+            <div class="ring-icon" data-icon="server"></div>
+            <div class="device__body">
+              <div class="device__top">
+                <span class="cat">Устройство</span>
+                <span class="ob-badge ob-badge--neutral" id="device-status"><span class="ob-badge__dot"></span>Проверяем</span>
+              </div>
+              <h3 class="device__name" id="device-name">OMNIBOX</h3>
+              <p class="device__meta mono" id="device-meta"></p>
+            </div>
+          </article>
+
+          <div class="actions">
+            <button class="ob-btn ob-btn--primary ob-btn--l" data-focus data-action="run"><span data-icon="power"></span>Включить</button>
+            <button class="ob-btn ob-btn--secondary ob-btn--l" data-focus data-action="hdmi"><span data-icon="monitor"></span><span id="hdmi-only">Только HDMI 3</span></button>
+            <button class="ob-btn ob-btn--secondary ob-btn--l" data-focus data-action="discover"><span data-icon="search"></span>Найти устройства</button>
+            <button class="ob-btn ob-btn--ghost ob-btn--l" data-focus data-action="settings"><span data-icon="settings"></span>Настройки</button>
+          </div>
+        </div>
+        <div class="home__aside">
+          <div class="halo"></div>
+          <span data-mark="176" data-lit="1" data-breathe="1"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Настройки ── -->
+  <section class="screen" id="screen-settings">
+    <header class="topbar">
+      <span class="logo"><span data-mark="28"></span><span data-word="11.3"></span></span>
+    </header>
+    <div class="page">
+      <p class="label">02 · Настройки</p>
+      <h1 class="display-m">Устройство и вход</h1>
+
+      <div class="form">
+        <div class="form__col">
+          <div class="field">
+            <label class="field__label" for="f-name">Имя</label>
+            <input class="field__input" id="f-name" data-focus type="text" maxlength="32" placeholder="OMNIBOX" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field field--mono" id="fld-ip">
+            <label class="field__label" for="f-ip">IP-адрес</label>
+            <div class="field__row">
+              <input class="field__input" id="f-ip" data-focus type="text" maxlength="15" placeholder="192.168.1.10" autocomplete="off" spellcheck="false">
+              <button class="ob-btn ob-btn--secondary" data-focus data-action="resolve">Найти MAC</button>
+            </div>
+            <span class="field__hint" id="h-ip">Нужен для проверки связи и поиска MAC-адреса</span>
+          </div>
+          <div class="field field--mono" id="fld-mac">
+            <label class="field__label" for="f-mac">MAC-адрес</label>
+            <input class="field__input" id="f-mac" data-focus type="text" maxlength="17" placeholder="AA:BB:CC:DD:EE:FF" autocomplete="off" spellcheck="false">
+            <span class="field__hint" id="h-mac">Сетевая карта, на которую придёт сигнал пробуждения</span>
+          </div>
+        </div>
+
+        <div class="form__col">
+          <div class="field">
+            <span class="field__label">Вход HDMI</span>
+            <div class="chips" id="chips">
+              <span class="chip" data-focus data-hdmi="1">1</span>
+              <span class="chip" data-focus data-hdmi="2">2</span>
+              <span class="chip" data-focus data-hdmi="3">3</span>
+              <span class="chip" data-focus data-hdmi="4">4</span>
+            </div>
+          </div>
+          <div class="switch-row" data-focus data-toggle="autoRun">
+            <span><span class="switch-row__text">Запускать сразу</span>
+              <span class="switch-row__hint">При открытии — пробуждение и переключение входа</span></span>
+            <span class="switch" id="sw-autoRun"></span>
+          </div>
+          <div class="switch-row" data-focus data-toggle="closeAfter">
+            <span><span class="switch-row__text">Закрывать после переключения</span>
+              <span class="switch-row__hint">Приложение не остаётся в памяти телевизора</span></span>
+            <span class="switch" id="sw-closeAfter"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="ob-btn ob-btn--primary ob-btn--l" data-focus data-action="save">Сохранить</button>
+        <button class="ob-btn ob-btn--secondary ob-btn--l" data-focus data-action="discover"><span data-icon="search"></span>Найти устройства</button>
+        <button class="ob-btn ob-btn--ghost ob-btn--l" data-focus data-action="back">Отмена</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Поиск устройств ── -->
+  <section class="screen" id="screen-discover">
+    <header class="topbar">
+      <span class="logo"><span data-mark="28"></span><span data-word="11.3"></span></span>
+    </header>
+    <div class="page">
+      <p class="label">03 · Поиск</p>
+      <h1 class="display-m">Устройства в сети</h1>
+      <p class="lead" id="scan-lead">Находятся только включённые устройства. Включите OMNIBOX перед поиском.</p>
+
+      <div class="scan" id="scan-wait">
+        <svg width="56" height="56" viewBox="0 0 100 100" aria-hidden="true">
+          <defs><linearGradient id="ign" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="100">
+            <stop offset="0.08" stop-color="#beefff"/><stop offset="0.5" stop-color="#7c6cff"/><stop offset="0.75" stop-color="#ff9654"/><stop offset="0.95" stop-color="#ffbe78"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="44" fill="none" stroke="#22263f" stroke-width="6"/>
+          <circle class="ob-ignite__trail" cx="50" cy="50" r="44" fill="none" stroke="url(#ign)" stroke-width="6" stroke-linecap="round" stroke-dasharray="276.46" transform="rotate(-90 50 50)"/>
+        </svg>
+        <p id="scan-text">Опрашиваем подсеть, около 5 секунд</p>
+      </div>
+      <div class="tiles" id="tiles" hidden></div>
+
+      <div class="scan-actions">
+        <button class="ob-btn ob-btn--secondary ob-btn--l" data-focus data-action="rescan">Повторить</button>
+        <button class="ob-btn ob-btn--ghost ob-btn--l" data-focus data-action="back">Назад</button>
+        <span class="note" id="scan-note"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="toast" id="toast" role="status"><span class="ob-badge" id="toast-badge"><span class="ob-badge__dot"></span><span id="toast-word"></span></span><span id="toast-text"></span></div>
+  <span class="ob-badge ob-badge--info demo-flag" id="demo-flag" hidden><span class="ob-badge__dot"></span>Предпросмотр без телевизора</span>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

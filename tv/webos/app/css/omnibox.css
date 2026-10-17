@@ -1,0 +1,246 @@
+/*
+ * OmniBox для LG webOS — дизайн-система OMNIBOX, тема night.
+ * Старый движок webOS 4.x (Chromium 53): без CSS Grid, без gap во flex,
+ * без :focus-visible и conic-gradient. Фокус пульта — класс .is-focus.
+ * Макет рассчитан на ширину 1200 px и масштабируется под экран (см. app.js).
+ */
+
+/* ── Шрифты (локально, статические начертания) ───────── */
+@font-face { font-family: "Michroma"; src: url("../fonts/Michroma-Regular.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Unbounded Light"; src: url("../fonts/UnboundedLight-Regular.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Inter"; src: url("../fonts/Inter-400.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Inter"; src: url("../fonts/Inter-600.woff2") format("woff2"); font-weight: 600; }
+@font-face { font-family: "JetBrains Mono"; src: url("../fonts/JetBrainsMono-400.woff2") format("woff2"); font-weight: 400; }
+
+/* ── Токены ─────────────────────────────────────────── */
+:root {
+  --void: #000000; --deep-night: #0a0c1f; --signal: #dee4ee;
+  --ice: #beefff; --iris: #7c6cff; --ember: #ff9654; --amber: #ffbe78;
+  --halo: #070920;
+
+  --bg: var(--void);
+  --surface: var(--deep-night);
+  --surface-raised: #12152b;
+  --line: #22263f;
+  --line-strong: #5c6288;
+  --text: var(--signal);
+  --text-muted: #8a90a0;
+  --accent: var(--iris);
+  --accent-hover: #9a8cff;
+  --on-accent: #05060f;
+  --focus: #9a8cff;
+  --warm: var(--ember);
+  --ok: #3ddc97;
+  --warn: #ffc857;
+  --danger: #ff6b7a;
+  --info: var(--ice);
+
+  --font-display: "Michroma", "Unbounded Light", "Arial", sans-serif;
+  --font-text: "Inter", "LG Smart UI", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 88px;
+  --radius-s: 6px; --radius-m: 10px; --radius-l: 16px; --radius-full: 9999px;
+
+  --focus-ring: 0 0 0 2px #000000, 0 0 0 4px #9a8cff;
+  --glow-accent: 0 0 0 1px #7c6cff, 0 0 24px rgba(124, 108, 255, 0.35);
+  --glow-warm: 0 0 0 1px #ff9654, 0 0 28px rgba(255, 150, 84, 0.30);
+  --overlay: 0 24px 64px rgba(0, 0, 0, 0.7);
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-fast: 160ms;
+  --dur: 280ms;
+}
+
+/* ── Основа ─────────────────────────────────────────── */
+html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); overflow: hidden; }
+.ob-root, .ob-root * { box-sizing: border-box; }
+.ob-root { font-family: var(--font-text); color: var(--text); -webkit-font-smoothing: antialiased; cursor: default; }
+#app { position: relative; width: 1200px; height: 675px; overflow: hidden; }
+[hidden] { display: none !important; }
+code, .mono { font-family: var(--font-mono); font-size: 13px; }
+
+.label { font-family: var(--font-display); font-size: 11px; line-height: 16px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); margin: 0 0 var(--space-3); }
+.display-l { font-family: var(--font-display); font-weight: 400; font-size: 36px; line-height: 44px; letter-spacing: 0.12em; text-transform: uppercase; margin: 0; }
+.display-m { font-family: var(--font-display); font-weight: 400; font-size: 22px; line-height: 30px; letter-spacing: 0.12em; text-transform: uppercase; margin: 0; }
+.lead { font-size: 15px; line-height: 22px; color: var(--text-muted); margin: var(--space-3) 0 0; }
+
+/* ── Экраны ─────────────────────────────────────────── */
+.screen { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: none; opacity: 0; transition: opacity var(--dur) var(--ease); }
+.screen.is-active { display: block; }
+.screen.is-shown { opacity: 1; }
+.page { position: absolute; left: 72px; right: 72px; top: 112px; bottom: 40px; }
+
+/* ── Шапка ──────────────────────────────────────────── */
+.topbar { position: absolute; left: 72px; right: 72px; top: 0; height: 72px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; border-bottom: 1px solid var(--line); }
+.topbar__end { margin-left: auto; display: flex; align-items: center; }
+.topbar__end > * + * { margin-left: var(--space-3); }
+.logo { display: flex; align-items: center; color: var(--text); }
+.logo .ob-mark { margin-right: 12px; }
+.logo__word { display: block; fill: currentColor; }
+
+/* ── Знак ───────────────────────────────────────────── */
+.ob-mark { display: inline-block; flex: none; vertical-align: middle; overflow: visible; }
+.ob-mark--lit { -webkit-filter: drop-shadow(0 0 3px rgba(222, 228, 238, 0.55)) drop-shadow(0 0 14px rgba(124, 108, 255, 0.45)); filter: drop-shadow(0 0 3px rgba(222, 228, 238, 0.55)) drop-shadow(0 0 14px rgba(124, 108, 255, 0.45)); }
+.ob-mark--breathe { animation: ob-breathe 4000ms ease-in-out infinite; }
+@keyframes ob-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.87; } }
+.halo { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, var(--halo), rgba(0, 0, 0, 0)); pointer-events: none; }
+
+/* ── Кнопки ─────────────────────────────────────────── */
+.ob-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 40px; padding: 0 var(--space-4); border-radius: var(--radius-m);
+  font: 600 14px/1 var(--font-text); letter-spacing: 0.01em; white-space: nowrap;
+  border: 1px solid transparent; cursor: pointer; text-decoration: none; outline: none; background: transparent;
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.ob-btn svg { width: 18px; height: 18px; flex: none; margin-right: var(--space-2); }
+.ob-btn--l { height: 48px; padding: 0 var(--space-5); font-size: 15px; }
+.ob-btn--s { height: 32px; padding: 0 var(--space-3); font-size: 13px; border-radius: var(--radius-s); }
+.ob-btn--primary { background: var(--accent); color: var(--on-accent); }
+.ob-btn--primary.is-focus { background: var(--accent-hover); }
+.ob-btn--secondary { color: var(--text); border-color: var(--line-strong); }
+.ob-btn--secondary.is-focus { background: var(--surface-raised); border-color: var(--text-muted); }
+.ob-btn--ghost { color: var(--text-muted); }
+.ob-btn--ghost.is-focus { background: var(--surface-raised); color: var(--text); }
+.ob-btn.is-busy { opacity: 0.6; }
+.is-focus { box-shadow: var(--focus-ring); }
+
+/* ── Бейджи ─────────────────────────────────────────── */
+.ob-badge {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 10px 0 8px;
+  border-radius: var(--radius-full); border: 1px solid currentColor;
+  font: 500 12px/16px var(--font-text); letter-spacing: 0.02em; white-space: nowrap;
+}
+.ob-badge__dot { width: 7px; height: 7px; border-radius: var(--radius-full); background: currentColor; flex: none; margin-right: 6px; }
+.ob-badge--ok { color: var(--ok); }
+.ob-badge--warn { color: var(--warn); }
+.ob-badge--warn .ob-badge__dot { border-radius: 0; width: 0; height: 0; background: none; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 7px solid currentColor; }
+.ob-badge--danger { color: var(--danger); }
+.ob-badge--danger .ob-badge__dot { border-radius: 1px; transform: rotate(45deg); width: 6px; height: 6px; }
+.ob-badge--info { color: var(--info); }
+.ob-badge--neutral { color: var(--text-muted); }
+.ob-badge--live { color: var(--warm); }
+.ob-badge--live .ob-badge__dot { background: transparent; border: 1.5px solid currentColor; width: 9px; height: 9px; animation: ob-breathe 4000ms ease-in-out infinite; }
+
+/* ── Карточки и плитки ──────────────────────────────── */
+.ob-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-l); padding: var(--space-5); }
+.ring-icon { width: 44px; height: 44px; border-radius: var(--radius-full); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; color: var(--text); flex: none; }
+.ring-icon svg { width: 20px; height: 20px; }
+.cat { font-family: var(--font-display); font-size: 10px; line-height: 14px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); }
+
+/* ── Главный экран ──────────────────────────────────── */
+.home { display: flex; height: 100%; }
+.home__main { width: 780px; flex: none; }
+.home__aside { flex: 1; position: relative; }
+.home__aside .halo { width: 420px; height: 420px; left: 50%; top: 46%; margin: -210px 0 0 -210px; }
+.home__aside .ob-mark { position: absolute; left: 50%; top: 46%; margin: -88px 0 0 -88px; }
+
+.device { display: flex; align-items: center; margin-top: var(--space-6); transition: box-shadow var(--dur) var(--ease); }
+.device.is-waking { box-shadow: var(--glow-warm); border-color: transparent; }
+.device__body { margin-left: var(--space-4); min-width: 0; flex: 1; }
+.device__top { display: flex; align-items: center; justify-content: space-between; }
+.device__name { font: 600 18px/26px var(--font-text); margin: var(--space-1) 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.device__meta { font-size: 13px; line-height: 20px; color: var(--text-muted); margin: 2px 0 0; }
+.device__meta .sep { margin: 0 var(--space-2); }
+.missing { color: var(--warn); font-family: var(--font-text); }
+
+.actions { display: flex; flex-wrap: wrap; margin-top: var(--space-5); }
+.actions > * { margin: 0 var(--space-3) var(--space-3) 0; }
+
+/* ── Уведомление ────────────────────────────────────── */
+.toast {
+  position: absolute; right: 72px; top: 88px; max-width: 640px;
+  display: flex; align-items: center; padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius-m); box-shadow: var(--overlay);
+  font-size: 15px; line-height: 22px; opacity: 0; transform: translateY(-8px);
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); pointer-events: none; z-index: 5;
+}
+.toast.is-shown { opacity: 1; transform: translateY(0); }
+.toast .ob-badge { margin-right: var(--space-3); }
+
+/* ── Настройки ──────────────────────────────────────── */
+.form { display: flex; margin-top: var(--space-6); }
+.form__col { width: 50%; }
+.form__col + .form__col { margin-left: var(--space-6); }
+.field { margin-bottom: var(--space-5); }
+.field__label { display: block; font: 500 13px/18px var(--font-text); color: var(--text); margin-bottom: 6px; }
+.field__row { display: flex; align-items: center; }
+.field__row .ob-btn { margin-left: var(--space-3); flex: none; }
+.field__input {
+  display: block; height: 40px; width: 100%; padding: 0 var(--space-3); border-radius: var(--radius-m);
+  background: var(--surface-raised); color: var(--text); border: 1px solid var(--line-strong); outline: none;
+  font: 400 15px/22px var(--font-text);
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.field__input::-webkit-input-placeholder { color: var(--text-muted); }
+.field__input.is-focus, .field__input:focus { border-color: var(--focus); box-shadow: var(--focus-ring); }
+.field--mono .field__input { font-family: var(--font-mono); font-size: 14px; }
+.field__hint { display: block; font: 400 13px/18px var(--font-text); color: var(--text-muted); margin-top: 6px; }
+.field--error .field__input { border-color: var(--danger); }
+.field--error .field__hint { color: var(--danger); }
+
+.chips { display: flex; }
+.chip {
+  height: 40px; min-width: 64px; padding: 0 var(--space-4); margin-right: var(--space-2);
+  display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-full);
+  border: 1px solid var(--line-strong); color: var(--text-muted); font: 600 14px/1 var(--font-text); cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.chip.is-selected { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.chip.is-focus:not(.is-selected) { background: var(--surface-raised); color: var(--text); }
+
+.switch-row { display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); margin: 0 calc(-1 * var(--space-4)) var(--space-3); border-radius: var(--radius-m); cursor: pointer; }
+.switch-row.is-focus { background: var(--surface-raised); }
+.switch-row__text { font-size: 15px; line-height: 22px; }
+.switch-row__hint { display: block; font-size: 13px; line-height: 18px; color: var(--text-muted); margin-top: 2px; }
+.switch { position: relative; width: 44px; height: 24px; border-radius: var(--radius-full); border: 1.5px solid var(--line-strong); flex: none; margin-left: var(--space-4); transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.switch::after { content: ""; position: absolute; top: 3.5px; left: 3.5px; width: 14px; height: 14px; border-radius: var(--radius-full); border: 1.5px solid var(--text-muted); box-sizing: border-box; transition: transform var(--dur) var(--ease), background-color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.switch.is-on { background: var(--accent); border-color: var(--accent); }
+.switch.is-on::after { transform: translateX(20px); background: var(--on-accent); border-color: var(--on-accent); }
+
+.form-actions { position: absolute; left: 0; bottom: 0; display: flex; }
+.form-actions > * { margin-right: var(--space-3); }
+
+/* ── Поиск устройств ────────────────────────────────── */
+.scan { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 360px; color: var(--text-muted); font-size: 15px; line-height: 22px; text-align: center; }
+.scan p { margin: var(--space-4) 0 0; }
+.ob-ignite__trail { animation: ob-ignite 1100ms var(--ease) infinite; }
+@keyframes ob-ignite { 0% { stroke-dashoffset: 276.46; opacity: 1; } 70% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+
+.tiles { display: flex; flex-wrap: wrap; margin: var(--space-6) calc(-1 * var(--space-2)) 0; max-height: 420px; overflow: hidden; }
+.tile {
+  width: 336px; margin: 0 var(--space-2) var(--space-4); padding: var(--space-4) var(--space-5);
+  display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-l); cursor: pointer;
+  transition: background-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.tile.is-focus { background: var(--surface-raised); box-shadow: var(--glow-accent); border-color: transparent; }
+.tile__body { margin-left: var(--space-4); min-width: 0; flex: 1; }
+.tile__name { font: 600 16px/24px var(--font-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile__name.is-unknown { color: var(--text-muted); font-weight: 400; }
+.tile__addr { font: 400 13px/19px var(--font-mono); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile__mark { color: var(--ok); font: 500 12px/16px var(--font-text); margin-left: var(--space-2); }
+
+.scan-actions { position: absolute; left: 0; bottom: 0; display: flex; align-items: center; }
+.scan-actions > * { margin-right: var(--space-3); }
+.scan-actions .note { font-size: 13px; line-height: 18px; color: var(--text-muted); margin-left: var(--space-3); }
+
+/* ── Экран запуска ──────────────────────────────────── */
+.launch { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.screen--launch .halo { width: 620px; height: 620px; left: 50%; top: 42%; margin: -310px 0 0 -310px; }
+.launch .ob-mark { position: relative; }
+.launch__word { margin-top: 40px; position: relative; }
+.launch__status { position: relative; margin: 36px 0 0; font-size: 18px; line-height: 26px; color: var(--text); }
+.launch__sub { position: relative; margin: 6px 0 0; font-size: 13px; line-height: 18px; color: var(--text-muted); }
+.launch__hint { position: absolute; left: 0; right: 0; bottom: 40px; margin: 0; text-align: center; font-size: 13px; line-height: 18px; color: var(--text-muted); }
+.launch__bar { position: relative; width: 220px; height: 2px; margin-top: 24px; border-radius: var(--radius-full); background: var(--line); overflow: hidden; }
+.launch__bar span { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: var(--radius-full); background: linear-gradient(90deg, var(--ice) 8%, var(--iris) 50%, var(--ember) 75%, var(--amber) 95%); }
+.launch__bar.is-running span { width: 100%; transition-property: width; transition-timing-function: linear; }
+
+/* ── Предпросмотр в браузере ────────────────────────── */
+.demo-flag { position: absolute; right: 72px; bottom: 32px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-mark--breathe, .ob-badge--live .ob-badge__dot, .ob-ignite__trail { animation: none; }
+}
