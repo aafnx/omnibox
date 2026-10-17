@@ -1,0 +1,10 @@
+{
+  "id": "com.omnibox.launcher.service",
+  "description": "OmniBox: Wake-on-LAN, поиск устройств и проверка связи",
+  "services": [
+    {
+      "name": "com.omnibox.launcher.service",
+      "description": "OmniBox: Wake-on-LAN, поиск устройств и проверка связи"
+    }
+  ]
+}
