@@ -28,6 +28,19 @@ var exec = require('child_process').exec;
 var SERVICE_ID = 'com.omnibox.launcher.service';
 var service = new Service(SERVICE_ID);
 
+/* ── Буферы ─────────────────────────────────────────────
+ * На webOS 4.x стоит Node.js 0.12: Buffer.alloc и Buffer.from там нет. */
+
+function allocBuf(size, fill) {
+  var b = new Buffer(size);
+  b.fill(fill || 0);
+  return b;
+}
+
+function bufFrom(bytes) {
+  return new Buffer(bytes);
+}
+
 /* ── Адреса ─────────────────────────────────────────── */
 
 function isIp(s) {
@@ -145,7 +158,7 @@ function readArp(cb) {
 /* ── NetBIOS: имя компьютера Windows (UDP 137) ──────── */
 
 var NBSTAT_QUERY = (function () {
-  var b = Buffer.alloc(50);
+  var b = allocBuf(50);
   b.writeUInt16BE(0x4f42, 0);  // id
   b.writeUInt16BE(0x0000, 2);  // flags
   b.writeUInt16BE(1, 4);       // qdcount
@@ -185,7 +198,7 @@ function poke(ips, waitMs, cb) {
   var names = {};
   var sock = dgram.createSocket('udp4');
   var done = false;
-  var nudge = Buffer.from ? Buffer.from([0]) : new Buffer([0]);
+  var nudge = bufFrom([0]);
   sock.on('error', function () { /* недоступные адреса просто пропускаем */ });
   sock.on('message', function (msg, rinfo) {
     if (rinfo.port === 137) {
@@ -278,7 +291,7 @@ service.register('wake', safe(function (msg, p) {
     return;
   }
   var macBytes = mac.split(':').map(function (h) { return parseInt(h, 16); });
-  var pkt = Buffer.alloc(102, 0xff);
+  var pkt = allocBuf(102, 0xff);
   for (var i = 0; i < 16; i++) {
     for (var j = 0; j < 6; j++) pkt[6 + i * 6 + j] = macBytes[j];
   }

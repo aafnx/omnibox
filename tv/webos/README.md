@@ -16,7 +16,7 @@
 
 Нужен включённый Developer Mode на телевизоре (приложение Developer Mode из LG Content Store).
 
-**Через webOS Dev Manager.** Вкладка Apps → Install → выберите `com.omnibox.launcher_1.1.0_all.ipk`.
+**Через webOS Dev Manager.** Вкладка Apps → Install → выберите `com.omnibox.launcher_1.1.1_all.ipk`.
 
 **Через webOS CLI:**
 
@@ -24,7 +24,7 @@
 npm install -g @webos-tools/cli
 ares-setup-device                         # один раз: IP телевизора, порт 9922, пользователь prisoner
 ares-novacom --device tv --getkey         # один раз: Passphrase с экрана Developer Mode
-ares-install --device tv dist/com.omnibox.launcher_1.1.0_all.ipk
+ares-install --device tv dist/com.omnibox.launcher_1.1.1_all.ipk
 ```
 
 ## Сборка из исходников

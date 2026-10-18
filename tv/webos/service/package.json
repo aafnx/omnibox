@@ -1,6 +1,6 @@
 {
   "name": "com.omnibox.launcher.service",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "OmniBox: Wake-on-LAN, поиск устройств и проверка связи",
   "main": "service.js",
   "license": "MIT"
