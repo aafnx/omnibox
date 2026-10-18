@@ -375,10 +375,13 @@
   /* ── Форма настроек ─────────────────────────────────── */
 
   var form = {};
+  // Поля, которые правит форма. Токен и порт агента WinCLI сюда не входят:
+  // их пишет только экран подключения, иначе «Сохранить» затрёт токен.
+  var FORM_KEYS = ['name', 'ip', 'mac', 'hdmi', 'autoRun', 'closeAfter'];
 
   function openForm() {
     form = {};
-    Object.keys(cfg).forEach(function (k) { form[k] = cfg[k]; });
+    FORM_KEYS.forEach(function (k) { form[k] = cfg[k]; });
     $('f-name').value = form.name;
     $('f-ip').value = form.ip;
     $('f-mac').value = form.mac;
@@ -499,7 +502,7 @@
     back: back,
     save: function () {
       if (!readForm()) { toast('warn', 'Исправьте отмеченные поля'); return; }
-      Object.keys(form).forEach(function (k) { cfg[k] = form[k]; });
+      FORM_KEYS.forEach(function (k) { cfg[k] = form[k]; });
       cfg.mac = normMac(cfg.mac);
       save();
       history = [];
