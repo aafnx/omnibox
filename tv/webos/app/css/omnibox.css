@@ -248,6 +248,8 @@ code, .mono { font-family: var(--font-mono); font-size: 13px; }
 /* ── Питание · WinCLI ───────────────────────────────── */
 .ob-btn--danger { color: var(--danger); border-color: var(--danger); }
 .ob-btn--danger.is-focus { background: var(--surface-raised); }
+.ob-btn--warn { color: var(--warn); border-color: var(--warn); }
+.ob-btn--warn.is-focus { background: var(--surface-raised); }
 .power-head { display: flex; align-items: center; margin-top: var(--space-5); }
 .power-head .ob-badge { margin-left: var(--space-3); }
 .actions--power { margin-top: var(--space-3); }

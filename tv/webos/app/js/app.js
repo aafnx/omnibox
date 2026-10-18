@@ -342,6 +342,12 @@
     }, SWITCH_DELAY);
   }
 
+  /* Всплывающее уведомление webOS поверх любого входа. */
+  function systemToast(message) {
+    if (!isTV) return;
+    luna('luna://com.webos.notification/createToast', { sourceId: APP_ID, message: message, noaction: true });
+  }
+
   function closeApp() {
     try { window.close(); } catch (e) { /* в браузере закрыть нельзя */ }
   }
@@ -591,7 +597,7 @@
       return;
     }
     if (meta.confirm) {
-      openModal(meta.confirm + ' ' + cfg.name + '?', meta.text, meta.confirm, function () { sendPower(action); });
+      openModal(meta.confirm + ' ' + cfg.name + '?', meta.text, meta.confirm, function () { sendPower(action); }, action === 'reboot' ? 'warn' : 'danger');
       return;
     }
     sendPower(action);
@@ -601,8 +607,17 @@
     var meta = POWER[action];
     luna(SVC + 'agentPower', agentParams({ action: action }), function (res) {
       if (res.returnValue) {
-        toast('ok', cfg.name + ' ' + meta.done, meta.toast);
+        var text = cfg.name + ' ' + meta.done;
+        toast('ok', text + '. Переключаю на HDMI ' + cfg.hdmi, meta.toast);
+        // Системное уведомление видно и после переключения входа.
+        systemToast(meta.toast + ': ' + text);
         if (action !== 'lock') badge($('device-status'), 'neutral', action === 'reboot' ? 'Перезагрузка' : 'Отключается');
+        setTimeout(function () {
+          switchInput(function (r) {
+            if (!r.returnValue) { toast('danger', 'Не удалось открыть HDMI ' + cfg.hdmi + (r.errorText ? ': ' + r.errorText : '')); return; }
+            if (cfg.closeAfter && isTV) setTimeout(closeApp, 900);
+          });
+        }, 1200);
         return;
       }
       if (res.status === 401) {
@@ -683,7 +698,8 @@
   var modalOk = null;
   var modalReturn = null;
 
-  function openModal(title, text, okLabel, onOk) {
+  function openModal(title, text, okLabel, onOk, tone) {
+    $('modal-ok').className = 'ob-btn ob-btn--' + (tone || 'danger') + ' ob-btn--l';
     $('modal-title').textContent = title;
     $('modal-text').textContent = text || '';
     $('modal-ok').textContent = okLabel;
