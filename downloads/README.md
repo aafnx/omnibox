@@ -5,8 +5,8 @@
 | Файл | Что это | SHA-256 |
 |---|---|---|
 | `com.omnibox.launcher_1.1.4_all.ipk` | OmniBox 1.1.4 для LG webOS ([`tv/webos`](../tv/webos)) | `14f79890021917fe4e69745017b69025941a220218e4039ae37556bd378ec879` |
-| `win-x64.exe` | WinCLI 1.4.0, Windows x64 | `61f16c86ae78cec405b4f7748ecc94cfec11b6ebe80987b0436fab69e616cdbe` |
-| `win-arm64.exe` | WinCLI 1.4.0, Windows ARM64 | `469b4bb1bfff94e3e7de5e0181498655bac87c160e7a33930d6409bfa1032ed5` |
+| `win-x64.exe` | WinCLI 1.4.1, Windows x64 | `e049e389c127362b90e83065220de5843734dccec0a5db489e41af95c7caa877` |
+| `win-arm64.exe` | WinCLI 1.4.1, Windows ARM64 | `04331fdeb340e63557cc2d64e3598e31e2f7d89c056f2fe5a87d521e7e241542` |
 
 ## WinCLI на OMNIBOX (по SSH)
 
