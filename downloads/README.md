@@ -4,7 +4,7 @@
 
 | Файл | Что это | SHA-256 |
 |---|---|---|
-| `com.omnibox.launcher_1.1.3_all.ipk` | OmniBox 1.1.3 для LG webOS ([`tv/webos`](../tv/webos)) | `225a8efe2e0a367a4031eeca944d34e2efcfee8975a1a158613fd08fa11d6b7e` |
+| `com.omnibox.launcher_1.1.4_all.ipk` | OmniBox 1.1.4 для LG webOS ([`tv/webos`](../tv/webos)) | `14f79890021917fe4e69745017b69025941a220218e4039ae37556bd378ec879` |
 | `win-x64.exe` | WinCLI 1.4.0, Windows x64 | `61f16c86ae78cec405b4f7748ecc94cfec11b6ebe80987b0436fab69e616cdbe` |
 | `win-arm64.exe` | WinCLI 1.4.0, Windows ARM64 | `469b4bb1bfff94e3e7de5e0181498655bac87c160e7a33930d6409bfa1032ed5` |
 
@@ -21,7 +21,7 @@ irm https://raw.githubusercontent.com/aafnx/omnibox/main/downloads/win-x64.exe -
 ## OmniBox на телевизор (с любого компьютера с webOS CLI)
 
 ```powershell
-irm https://raw.githubusercontent.com/aafnx/omnibox/main/downloads/com.omnibox.launcher_1.1.3_all.ipk -OutFile omnibox.ipk
+irm https://raw.githubusercontent.com/aafnx/omnibox/main/downloads/com.omnibox.launcher_1.1.4_all.ipk -OutFile omnibox.ipk
 ares-install --device tv omnibox.ipk
 ```
 

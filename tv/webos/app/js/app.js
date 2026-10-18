@@ -40,7 +40,6 @@
     search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
     moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
     restart: '<path d="M4 12a8 8 0 1 0 2.35-5.65"/><path d="M4 4.5V8h3.5"/>',
-    lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
     router: '<rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 16.5h.01M11 16.5h.01M15 9.5a4 4 0 0 1 4 3.5M15 6a7.5 7.5 0 0 1 7.5 7"/>'
   };
   function iconSvg(name) {
@@ -564,8 +563,7 @@
   var POWER = {
     sleep: { done: 'засыпает', toast: 'Сон' },
     reboot: { done: 'перезагружается', toast: 'Перезагрузка', confirm: 'Перезагрузить', text: 'Несохранённые данные в открытых программах могут пропасть.' },
-    shutdown: { done: 'выключается', toast: 'Выключение', confirm: 'Выключить', text: 'Включить снова можно кнопкой «Включить» — по сети.' },
-    lock: { done: 'заблокирован', toast: 'Блокировка' }
+    shutdown: { done: 'выключается', toast: 'Выключение', confirm: 'Выключить', text: 'Включить снова можно кнопкой «Включить» — по сети.' }
   };
 
   function agentParams(extra) {
@@ -611,7 +609,7 @@
         toast('ok', text + '. Переключаю на HDMI ' + cfg.hdmi, meta.toast);
         // Системное уведомление видно и после переключения входа.
         systemToast(meta.toast + ': ' + text);
-        if (action !== 'lock') badge($('device-status'), 'neutral', action === 'reboot' ? 'Перезагрузка' : 'Отключается');
+        badge($('device-status'), 'neutral', action === 'reboot' ? 'Перезагрузка' : 'Отключается');
         setTimeout(function () {
           switchInput(function (r) {
             if (!r.returnValue) { toast('danger', 'Не удалось открыть HDMI ' + cfg.hdmi + (r.errorText ? ': ' + r.errorText : '')); return; }
