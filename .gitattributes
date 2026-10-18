@@ -7,3 +7,5 @@
 *.html text eol=lf
 *.png binary
 *.woff2 binary
+*.exe binary
+*.ipk binary
