@@ -51,13 +51,31 @@ try { $codePageBefore = [Console]::OutputEncoding.CodePage } catch { }
 Write-Output "PowerShell $($PSVersionTable.PSVersion), console code page: $codePageBefore"
 if ($env:GITHUB_ACTIONS) { Write-Output "::notice title=test-encoding::PowerShell $($PSVersionTable.PSVersion), console code page: $codePageBefore" }
 
-Write-Output '1. Plain call, default console encoding'
-$raw = (& $Exe selftest --json) -join "`n"
-Test-Case 'exit code 0' ($LASTEXITCODE -eq 0) "got $LASTEXITCODE"
-$asciiOnly = $true
-foreach ($ch in $raw.ToCharArray()) { if ([int]$ch -gt 127) { $asciiOnly = $false; break } }
-Test-Case 'JSON is ASCII only' $asciiOnly
-Test-Samples 'plain' ($raw | ConvertFrom-Json)
+Write-Output '1. Plain call under the console code pages of Russian Windows'
+foreach ($cp in @(866, 1251, 65001)) {
+    $saved = $null
+    try {
+        $saved = [Console]::OutputEncoding
+        [Console]::OutputEncoding = [Text.Encoding]::GetEncoding($cp)
+    } catch {
+        Write-Output "  skip code page $cp (no console or no such encoding)"
+        continue
+    }
+    try {
+        $raw = (& $Exe selftest --json) -join "`n"
+        Test-Case "cp $cp / exit code 0" ($LASTEXITCODE -eq 0) "got $LASTEXITCODE"
+        $asciiOnly = $true
+        foreach ($ch in $raw.ToCharArray()) { if ([int]$ch -gt 127) { $asciiOnly = $false; break } }
+        Test-Case "cp $cp / JSON is ASCII only" $asciiOnly
+        Test-Samples "cp $cp" ($raw | ConvertFrom-Json)
+        $r = Invoke-OmniHub -Exe $Exe -Arguments @('selftest')
+        Test-Case "cp $cp / Invoke-OmniHub text" ($r.Output.Contains($expected.sample))
+        $now = [Console]::OutputEncoding.CodePage
+        Test-Case "cp $cp / console code page kept" ($now -eq $cp) "got $now"
+    } finally {
+        [Console]::OutputEncoding = $saved
+    }
+}
 
 Write-Output '2. Invoke-OmniHub -Json with a Russian argument'
 $r = Invoke-OmniHub -Exe $Exe -Arguments @('selftest', '--echo', $expected.sample) -Json
@@ -76,7 +94,26 @@ Test-Case 'exit code 0' ($r.ExitCode -eq 0) "got $($r.ExitCode): $($r.ErrorText)
 Test-Case 'text contains sample' ($r.Output.Contains($expected.sample))
 Test-Case 'text contains path' ($r.Output.Contains($expected.path))
 Test-Case 'text contains devices' ($r.Output.Contains($expected.devices[0]))
-Test-Case 'text has no BOM' (-not $r.Output.StartsWith([string][char]0xFEFF))
+$si = New-Object System.Diagnostics.ProcessStartInfo
+$si.FileName = $Exe
+$si.Arguments = 'selftest'
+$si.UseShellExecute = $false
+$si.CreateNoWindow = $true
+$si.RedirectStandardOutput = $true
+$proc = [System.Diagnostics.Process]::Start($si)
+$ms = New-Object System.IO.MemoryStream
+try {
+    $proc.StandardOutput.BaseStream.CopyTo($ms)
+    $proc.WaitForExit()
+} finally {
+    $proc.Dispose()
+}
+$bytes = $ms.ToArray()
+$bom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
+Test-Case 'stdout bytes: no UTF-8 BOM' (-not $bom)
+$decoded = $null
+try { $decoded = (New-Object System.Text.UTF8Encoding($false, $true)).GetString($bytes) } catch { }
+Test-Case 'stdout bytes: valid UTF-8 with the sample' ($null -ne $decoded -and $decoded.Contains($expected.sample))
 $r = Invoke-OmniHub -Exe $Exe -Arguments @('no-such-command')
 Test-Case 'unknown command: exit code 2' ($r.ExitCode -eq 2) "got $($r.ExitCode)"
 Test-Case 'unknown command: Russian error text' ($r.ErrorText.Length -gt 0 -and $r.ErrorText -match '[\u0400-\u04FF]')
