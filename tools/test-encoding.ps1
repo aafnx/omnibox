@@ -27,6 +27,7 @@ function Test-Case([string]$Title, [bool]$Ok, [string]$Detail = '') {
     } else {
         $script:failures++
         Write-Output "  FAIL $Title $Detail"
+        if ($env:GITHUB_ACTIONS) { Write-Output "::error title=test-encoding (PS $($PSVersionTable.PSVersion.Major))::$Title $Detail" }
     }
 }
 
@@ -48,6 +49,7 @@ function Test-Samples([string]$Title, $Data) {
 $codePageBefore = $null
 try { $codePageBefore = [Console]::OutputEncoding.CodePage } catch { }
 Write-Output "PowerShell $($PSVersionTable.PSVersion), console code page: $codePageBefore"
+if ($env:GITHUB_ACTIONS) { Write-Output "::notice title=test-encoding::PowerShell $($PSVersionTable.PSVersion), console code page: $codePageBefore" }
 
 Write-Output '1. Plain call, default console encoding'
 $raw = (& $Exe selftest --json) -join "`n"

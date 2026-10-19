@@ -91,7 +91,10 @@ foreach ($rel in (Get-TrackedFiles $Root)) {
 }
 
 if ($problems.Count -gt 0) {
-    foreach ($p in $problems) { Write-Output "FAIL $p" }
+    foreach ($p in $problems) {
+        Write-Output "FAIL $p"
+        if ($env:GITHUB_ACTIONS) { Write-Output "::error title=check-encoding::$p" }
+    }
     Write-Output "Encoding check: $($problems.Count) problem(s) in $checked file(s)."
     exit 1
 }
