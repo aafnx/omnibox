@@ -20,9 +20,11 @@ $samplesFile = Join-Path $repo 'hub\src\OmniHub.Core\Text\encoding-samples.json'
 $expected = [IO.File]::ReadAllText($samplesFile, (New-Object System.Text.UTF8Encoding($false))) | ConvertFrom-Json
 
 $script:failures = 0
+$script:passes = 0
 
 function Test-Case([string]$Title, [bool]$Ok, [string]$Detail = '') {
     if ($Ok) {
+        $script:passes++
         Write-Output "  ok   $Title"
     } else {
         $script:failures++
@@ -59,6 +61,7 @@ foreach ($cp in @(866, 1251, 65001)) {
         [Console]::OutputEncoding = [Text.Encoding]::GetEncoding($cp)
     } catch {
         Write-Output "  skip code page $cp (no console or no such encoding)"
+        if ($env:GITHUB_ACTIONS) { Write-Output "::warning title=test-encoding (PS $($PSVersionTable.PSVersion.Major))::skipped code page $cp" }
         continue
     }
     try {
@@ -146,5 +149,6 @@ if ($script:failures -gt 0) {
     Write-Output "Encoding test: $($script:failures) failure(s)."
     exit 1
 }
-Write-Output 'Encoding test: all passed.'
+Write-Output "Encoding test: all $($script:passes) checks passed."
+if ($env:GITHUB_ACTIONS) { Write-Output "::notice title=test-encoding (PS $($PSVersionTable.PSVersion.Major))::all $($script:passes) checks passed" }
 exit 0
