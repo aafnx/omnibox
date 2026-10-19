@@ -1,0 +1,49 @@
+name: hub
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  encoding:
+    name: Encoding rules
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check file encodings (Windows PowerShell 5.1)
+        shell: powershell
+        run: .\tools\check-encoding.ps1
+
+  build:
+    name: Build and test omnihub
+    runs-on: windows-latest
+    needs: encoding
+    defaults:
+      run:
+        working-directory: hub
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Unit tests
+        run: dotnet test tests/OmniHub.Tests -c Release
+      - name: Publish omnihub.exe (Native AOT, win-x64)
+        run: dotnet publish src/OmniHub.Cli -c Release -r win-x64 -o out
+      - name: Encoding test (Windows PowerShell 5.1)
+        shell: powershell
+        working-directory: .
+        run: .\tools\test-encoding.ps1 -Exe hub\out\omnihub.exe
+      - name: Encoding test (PowerShell 7)
+        shell: pwsh
+        working-directory: .
+        run: ./tools/test-encoding.ps1 -Exe hub/out/omnihub.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: omnihub-win-x64
+          path: hub/out/omnihub.exe
+          if-no-files-found: error

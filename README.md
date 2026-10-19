@@ -36,6 +36,10 @@ $o = [scriptblock]::Create((irm https://raw.githubusercontent.com/aafnx/omnibox/
 
 [`tv/webos`](tv/webos) — приложение OmniBox для LG webOS: одна кнопка будит OMNIBOX по Wake-on-LAN и переключает телевизор на его вход HDMI. Умеет искать устройства в сети и находить MAC по IP. Через агент [WinCLI](https://github.com/aafnx/win-cli) (`win --agent`) усыпляет, перезагружает и выключает OMNIBOX. Установка через Developer Mode, подробности в [его README](tv/webos/README.md).
 
+## OmniHub
+
+[`hub`](hub) — `omnihub.exe`, будущий инструмент для Decky, плагинов, Steam, звука и экранов OMNIBOX. Пока готов каркас с проверкой кодировки (`omnihub selftest`), подробности в [его README](hub/README.md).
+
 ## Устройство
 
 ```
@@ -44,8 +48,11 @@ lib/gui.ps1          окно (WinForms)
 lib/cli.ps1          консольное меню
 lib/runner.ps1       запуск раздела с параметрами
 lib/common.ps1       общие функции
+lib/omnihub.ps1      вызов omnihub.exe с чтением вывода в UTF-8
 modules/modules.json названия, описания и параметры разделов
 modules/<id>.ps1     сами разделы
+hub/                 OmniHub: omnihub.exe на .NET 10
+tools/               проверки кодировки для CI
 tv/webos/            приложение OmniBox для LG webOS
 ```
 
