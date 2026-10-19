@@ -9,3 +9,9 @@
 *.woff2 binary
 *.exe binary
 *.ipk binary
+*.cs text eol=lf
+*.csproj text eol=lf
+*.props text eol=lf
+*.yml text eol=lf
+*.txt text eol=lf
+*.webm binary
