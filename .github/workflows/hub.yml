@@ -42,6 +42,21 @@ jobs:
         shell: pwsh
         working-directory: .
         run: ./tools/test-encoding.ps1 -Exe hub/out/omnihub.exe
+      - name: Status report on the CI machine
+        shell: pwsh
+        working-directory: .
+        run: |
+          . ./lib/omnihub.ps1
+          $r = Invoke-OmniHub -Exe hub/out/omnihub.exe -Arguments @('status') -Json
+          foreach ($s in $r.Data.sections) {
+            $lines = @()
+            foreach ($i in $s.items) {
+              $lines += "[$($i.level)] $($i.label): $($i.value)"
+              foreach ($c in @($i.items)) { if ($c) { $lines += "    [$($c.level)] $($c.label): $($c.value)" } }
+            }
+            $msg = (($lines | ForEach-Object { $_.Replace('%', '%25') }) -join '%0A')
+            Write-Output "::notice title=status / $($s.id)::$msg"
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: omnihub-win-x64

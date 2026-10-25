@@ -1,5 +1,6 @@
 using System.Text.Json;
 using OmniHub.Platform;
+using OmniHub.Status;
 using OmniHub.Text;
 
 namespace OmniHub.Cli;
@@ -24,6 +25,7 @@ internal static class Commands
             "help" => Help(),
             "version" => Version(options),
             "selftest" => SelfTestCommand(options),
+            "status" => StatusCommand(options),
             _ => Unknown(options.Command),
         };
     }
@@ -136,6 +138,21 @@ internal static class Commands
         }
         o.WriteLine(ok ? Texts.AllOk : Texts.SomeFailed);
         return ok ? 0 : 1;
+    }
+
+    private static int StatusCommand(Options options)
+    {
+        StatusReport report = StatusRunner.Collect();
+        if (options.Json)
+        {
+            Console.Out.Write(StatusWriter.ToJson(report));
+            Console.Out.Write('\n');
+        }
+        else
+        {
+            Console.Out.Write(StatusWriter.ToText(report).Replace("\n", Environment.NewLine));
+        }
+        return 0;
     }
 
     private static void WriteHeader(Utf8JsonWriter writer, string command, bool ok)

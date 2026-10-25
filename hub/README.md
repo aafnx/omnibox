@@ -2,11 +2,13 @@
 
 `omnihub.exe` — один файл без установки .NET, который будет ставить и чинить Decky, плагины и Steam на OMNIBOX, а также управлять звуком и экранами. Его вызывают SSH-разделы `install.ps1`, окно OmniHub и Decky-плагин OmniHub в QAM.
 
-Сейчас готов каркас: команды `help`, `version` и `selftest`.
+Готово: `status` — отчёт о состоянии OMNIBOX, только чтение; `selftest` — проверка кодировки; `version`, `help`.
 
 ## Команды
 
 ```powershell
+omnihub status             # состояние OMNIBOX, ничего не меняет
+omnihub status --json      # то же для программ и Home Assistant
 omnihub version            # версия
 omnihub selftest           # проверка кодировки на этой машине
 omnihub selftest --json    # то же для программ
@@ -14,6 +16,15 @@ omnihub selftest --echo "Наушники (Sony)"   # проверка пере�
 ```
 
 Коды выхода: `0` — успех, `1` — проверка не прошла, `2` — ошибка в аргументах.
+
+## omnihub status
+
+Разделы отчёта: система, Steam, Decky, плагины Decky, автозапуск, Playhub, Game Bar, звук, экраны, Bluetooth. Каждая строка помечена: `[ OK ]` в порядке, `[ !! ]` стоит посмотреть, `[ -- ]` нет, `[ERR ]` не удалось прочитать. Ошибка одного раздела не мешает остальным.
+
+- Decky и заставки Steam сверяются по SHA-256 с [`catalog.json`](catalog.json): видно, официальная ли сборка Decky стоит или форк.
+- Порты 1337 (Decky) и 8080 (отладка Steam): кто слушает и доступен ли порт из сети.
+- Автозапуск: задачи планировщика (OMNIBOX, Steam, Decky, Playhub, WinCLI), ключи `Run`, папка автозагрузки, оболочка Windows. Задачи планировщика видны только администратору.
+- Звук — Core Audio, экраны — DisplayConfig (разрешение, частота, HDR, основной), Bluetooth — сопряжённые устройства и подключены ли они.
 
 ## Кодировка
 
@@ -42,7 +53,8 @@ dotnet publish src/OmniHub.Cli -c Release -r win-x64 -o out
 ## Устройство
 
 ```
-src/OmniHub.Core/   ядро: тексты, JSON, работа с консолью, проверки
+src/OmniHub.Core/   ядро: тексты, JSON, консоль, отчёт status, чтение Windows (Platform/)
 src/OmniHub.Cli/    omnihub.exe (Native AOT)
 tests/              модульные тесты xUnit
+catalog.json        что OmniHub знает и ставит: версии и SHA-256
 ```

@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "decky": {
+    "repository": "SteamDeckHomebrew/decky-loader",
+    "builds": [
+      {
+        "version": "3.3.0",
+        "asset": "PluginLoader-win-noconsole.exe",
+        "sha256": "51c7f3b9cdf6d6b8132273ca4cbc145595f2e36b556332b7c911de846ef914b7"
+      },
+      {
+        "version": "3.3.0",
+        "asset": "PluginLoader-win.exe",
+        "sha256": "c1611527e6a31be112f6da05a7153947b80449abd0b2427d99c12e60bb007a25"
+      }
+    ]
+  },
+  "movies": [
+    {
+      "id": "startup-15s-4k",
+      "file": "OMNIBOX-startup-4K-15s.webm",
+      "sha256": "7501145cf681dfd2ba1b43e4d07b871c50509dc803a34af6f6bbcc873f32b1eb",
+      "seconds": 15,
+      "width": 3840,
+      "height": 2160
+    }
+  ]
+}
