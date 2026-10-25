@@ -18,6 +18,13 @@ public static class Win
         !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SSH_CONNECTION"))
         || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SSH_CLIENT"));
 
+    /// <summary>Номер сеанса Windows. 0 — служебный сеанс без рабочего стола (так работает сервер SSH).</summary>
+    public static int SessionId()
+    {
+        using Process self = Process.GetCurrentProcess();
+        return self.SessionId;
+    }
+
     public static string Sha256(string path)
     {
         using FileStream stream = File.OpenRead(path);

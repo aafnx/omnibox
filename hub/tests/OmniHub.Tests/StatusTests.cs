@@ -17,7 +17,7 @@ public class StatusTests
         Assert.NotEmpty(catalog.DeckyBuilds);
         Assert.All(catalog.DeckyBuilds, b => Assert.Matches("^[0-9a-f]{64}$", b.Sha256));
         Assert.All(catalog.Movies, m => Assert.Matches("^[0-9a-f]{64}$", m.Sha256));
-        Assert.All(catalog.Movies, m => Assert.StartsWith("omnibox-", m.File, StringComparison.Ordinal));
+        Assert.All(catalog.Movies, m => Assert.StartsWith("OMNIBOX-", m.File, StringComparison.Ordinal));
         Assert.NotNull(catalog.FindDecky(catalog.DeckyBuilds[0].Sha256.ToUpperInvariant()));
     }
 
@@ -160,5 +160,13 @@ public class StatusTests
         Assert.Equal("Windows 11", SystemCollector.WindowsName("Windows 10 Pro", "Client", 26100));
         Assert.Equal("Windows 10", SystemCollector.WindowsName("Windows 10 Pro", "Client", 19045));
         Assert.Equal("Windows Server 2025 Datacenter", SystemCollector.WindowsName("Windows Server 2025 Datacenter", "Server", 26100));
+    }
+
+    [Fact]
+    public void Decky_processes_are_grouped()
+    {
+        Assert.Equal("да, основной процесс PID 9764, ещё 15 — процессы плагинов", StatusTexts.DeckyProcesses(16, 9764));
+        Assert.Equal("да, PID 9764", StatusTexts.DeckyProcesses(1, 9764));
+        Assert.Equal("да, процессов: 3", StatusTexts.DeckyProcesses(3, null));
     }
 }

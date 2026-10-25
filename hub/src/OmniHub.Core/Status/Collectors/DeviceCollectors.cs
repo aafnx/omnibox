@@ -74,8 +74,19 @@ internal static class DisplayCollector
     public static void Collect(StatusSection s, StatusContext ctx)
     {
         List<DisplayInfo> displays = Displays.Active();
-        s.Add("count", StatusTexts.DisplaysCount, StatusTexts.Count(displays.Count), displays.Count == 0 ? Level.Missing : Level.Info)
-            .With("count", displays.Count);
+        bool noDesktop = Win.SessionId() == 0 || Win.InSsh();
+        if (displays.Count == 0 && noDesktop)
+        {
+            s.Add("count", StatusTexts.DisplaysCount, StatusTexts.DisplaysNotFromSsh, Level.Info)
+                .With("count", 0)
+                .With("visible", false);
+        }
+        else
+        {
+            s.Add("count", StatusTexts.DisplaysCount, StatusTexts.Count(displays.Count), displays.Count == 0 ? Level.Missing : Level.Info)
+                .With("count", displays.Count)
+                .With("visible", true);
+        }
 
         int n = 0;
         foreach (DisplayInfo d in displays.OrderByDescending(d => d.Primary))

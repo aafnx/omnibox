@@ -18,7 +18,7 @@
   "movies": [
     {
       "id": "startup-15s-4k",
-      "file": "omnibox-startup-15s-4k.webm",
+      "file": "OMNIBOX-startup-4K-15s.webm",
       "sha256": "7501145cf681dfd2ba1b43e4d07b871c50509dc803a34af6f6bbcc873f32b1eb",
       "seconds": 15,
       "width": 3840,

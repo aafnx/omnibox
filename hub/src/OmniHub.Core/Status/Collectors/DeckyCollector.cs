@@ -45,14 +45,16 @@ internal static class DeckyCollector
             s.Add("playhubGuard", StatusTexts.DeckyPlayhubGuard, "Playhub-StartDecky.ps1").With("present", true);
         }
 
+        // Decky на Windows — один основной процесс (он слушает порт 1337) и по процессу на бэкенд каждого плагина.
         List<Win.ProcessEntry> running = Win.Processes("PluginLoader");
+        int? mainPid = ctx.Listeners.FirstOrDefault(l => l.Port == 1337 && running.Any(p => p.Pid == l.Pid))?.Pid;
         s.Add("running", StatusTexts.DeckyRunning,
-                running.Count == 0
-                    ? StatusTexts.DeckyNotRunning
-                    : string.Join(", ", running.Select(p => $"PID {p.Pid} ({p.Name})")),
+                running.Count == 0 ? StatusTexts.DeckyNotRunning : StatusTexts.DeckyProcesses(running.Count, mainPid),
                 running.Count == 0 ? Level.Warn : Level.Ok)
             .With("running", running.Count > 0)
             .With("count", running.Count)
+            .With("mainPid", mainPid)
+            .With("pids", running.Select(p => p.Pid.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToArray())
             .With("paths", running.Select(p => p.Path ?? string.Empty).Where(p => p.Length > 0).Distinct().ToArray());
 
         s.Add(Ports.Describe("port", StatusTexts.DeckyPort, ctx.Listeners, 1337, warnIfClosed: true));

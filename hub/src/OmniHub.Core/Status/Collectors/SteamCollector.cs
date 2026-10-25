@@ -72,15 +72,16 @@ internal static class SteamCollector
             {
                 ours++;
             }
-            string value = movie is null
-                ? StatusTexts.SteamMovieForeign
-                : $"{StatusTexts.SteamMovieOurs} · {movie.Seconds} с · {movie.Width}×{movie.Height}";
+            bool omniboxName = Path.GetFileName(file).StartsWith("OMNIBOX-", StringComparison.OrdinalIgnoreCase);
+            string value = movie is not null
+                ? $"{StatusTexts.SteamMovieOurs} · {movie.Seconds} с · {movie.Width}×{movie.Height}"
+                : omniboxName ? StatusTexts.SteamMovieUncatalogued : StatusTexts.SteamMovieForeign;
             item.Add(new StatusItem("movie", Path.GetFileName(file), value, movie is null ? Level.Info : Level.Ok)
                 .With("file", Path.GetFileName(file))
                 .With("sha256", hash)
                 .With("omnibox", movie?.Id));
         }
-        item.Value = $"{files.Length}, OMNIBOX: {ours}";
+        item.Value = $"{files.Length}, из каталога OMNIBOX: {ours}";
         item.With("count", files.Length).With("omnibox", ours);
         s.Add(item);
     }

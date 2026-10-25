@@ -35,7 +35,8 @@ public static class StatusTexts
     public const string SteamMovies = "Заставки запуска";
     public const string SteamMoviesNone = "своих нет";
     public const string SteamMovieOurs = "OMNIBOX";
-    public const string SteamMovieForeign = "не OMNIBOX";
+    public const string SteamMovieForeign = "не из OMNIBOX";
+    public const string SteamMovieUncatalogued = "OMNIBOX, нет в каталоге";
     public const string SteamDebugPort = "Порт отладки 8080";
 
     // Порты
@@ -54,6 +55,11 @@ public static class StatusTexts
     public const string DeckyPlayhubGuard = "Сторож автозапуска Playhub";
     public const string DeckyRunning = "Работает";
     public const string DeckyNotRunning = "нет";
+
+    public static string DeckyProcesses(int count, int? mainPid) =>
+        mainPid is int pid
+            ? (count > 1 ? $"да, основной процесс PID {pid}, ещё {count - 1} — процессы плагинов" : $"да, PID {pid}")
+            : $"да, процессов: {count}";
     public const string DeckyPort = "Порт 1337";
     public const string DeckyNeedsCef = "Отладка интерфейса Steam";
     public const string DeckyNeedsCefOff = "выключена — Decky не подключится к Big Picture";
@@ -107,6 +113,7 @@ public static class StatusTexts
     public const string DisplaysTitle = "Экраны";
     public const string DisplaysCount = "Активных экранов";
     public const string DisplayUnnamed = "Экран";
+    public const string DisplaysNotFromSsh = "из SSH не видны: Windows показывает экраны только программам в сеансе пользователя. Запустите omnihub status на самом OMNIBOX; в QAM это будет работать";
     public const string DisplayPrimary = "основной";
     public const string HdrOn = "HDR вкл";
     public const string HdrOff = "HDR выкл";
