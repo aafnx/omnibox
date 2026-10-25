@@ -6,5 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Text\encoding-samples.json" LogicalName="encoding-samples.json" />
+    <EmbeddedResource Include="..\..\catalog.json" LogicalName="catalog.json" />
   </ItemGroup>
 </Project>

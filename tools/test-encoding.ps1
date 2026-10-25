@@ -140,7 +140,18 @@ try {
     Remove-Item -LiteralPath $top -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Write-Output '5. Console code page unchanged'
+Write-Output '5. omnihub status (read-only report)'
+$r = Invoke-OmniHub -Exe $Exe -Arguments @('status') -Json
+Test-Case 'status: exit code 0' ($r.ExitCode -eq 0) "got $($r.ExitCode): $($r.ErrorText)"
+$ids = @($r.Data.sections | ForEach-Object { $_.id }) -join ','
+Test-Case 'status: all sections' ($ids -eq 'system,steam,decky,plugins,autostart,playhub,gamebar,audio,displays,bluetooth') "got $ids"
+$failed = @($r.Data.sections | Where-Object { $_.level -eq 'error' } | ForEach-Object { $_.id + ': ' + $_.items[0].value })
+if ($failed.Count -gt 0 -and $env:GITHUB_ACTIONS) { foreach ($f in $failed) { Write-Output "::warning title=status section error::$f" } }
+$r = Invoke-OmniHub -Exe $Exe -Arguments @('status')
+Test-Case 'status text: exit code 0' ($r.ExitCode -eq 0) "got $($r.ExitCode): $($r.ErrorText)"
+Test-Case 'status text: Russian titles' ($r.Output -match '[\u0400-\u04FF]')
+
+Write-Output '6. Console code page unchanged'
 $codePageAfter = $null
 try { $codePageAfter = [Console]::OutputEncoding.CodePage } catch { }
 Test-Case "code page $codePageBefore -> $codePageAfter" ($codePageBefore -eq $codePageAfter)
