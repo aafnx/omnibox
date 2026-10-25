@@ -153,4 +153,12 @@ public class StatusTests
         item.Add(new StatusItem("b", "B", null, Level.Warn));
         Assert.Equal(Level.Warn, section.WorstLevel());
     }
+
+    [Fact]
+    public void Windows_name_from_registry()
+    {
+        Assert.Equal("Windows 11", SystemCollector.WindowsName("Windows 10 Pro", "Client", 26100));
+        Assert.Equal("Windows 10", SystemCollector.WindowsName("Windows 10 Pro", "Client", 19045));
+        Assert.Equal("Windows Server 2025 Datacenter", SystemCollector.WindowsName("Windows Server 2025 Datacenter", "Server", 26100));
+    }
 }
